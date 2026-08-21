@@ -18,7 +18,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const activeJobs = new Map();
 
-// Helper to escape HTML characters
 function escapeHtml(str) {
     return (str || '')
         .replace(/&/g, '&amp;')
@@ -170,7 +169,6 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
             job.processedCount = i + 1;
             job.currentVideoTitle = item.title;
 
-            // Share initial 40% progress for script extraction
             job.progress = Math.round(15 + ((i + 1) / videoList.length) * 25);
             job.message = `Extracting Script [${i + 1}/${videoList.length}]: "${item.title}"`;
 
@@ -200,7 +198,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
                 wordCount: scriptText.startsWith('[Script') ? 0 : scriptText.split(/\s+/).length
             });
 
-            await new Promise(r => setTimeout(r, 100));
+            await new Promise(r => setTimeout(r, 80));
         }
 
         // --- PIPELINE 1: GENERATE PDF E-BOOK ---
@@ -264,7 +262,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
         `).join('')}
     </div>
     <h2 style="font-size: 22px; color: #0f172a; margin-top: 30px; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 6px;">
-        📝 Video Scripts
+        📝 Complete Video Scripts
     </h2>
     ${fullData.map(item => `
         <div class="video-card" id="video-${item.id}">
@@ -298,32 +296,44 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
             job.message = 'Breaking scripts into kinetic scenes & downloading AI background images...';
             job.progress = outputMode === 'both' ? 55 : 45;
 
-            // Use the top video's script or combine scenes
-            const targetVideo = fullData.find(d => d.wordCount > 0) || fullData[0];
-            const scenes = breakScriptIntoScenes(targetVideo ? targetVideo.script : '');
+            // Gather all available script scenes
+            let allScenes = [];
+            const validVideos = fullData.filter(d => d.wordCount > 0);
 
-            if (scenes.length === 0) {
-                // Fallback scene if script unavailable
-                scenes.push({
-                    index: 1,
-                    text: targetVideo ? targetVideo.title : `YouTube Channel ${handle}`,
-                    wordCount: 5,
-                    duration: 3.5,
-                    emoji: '🚀',
-                    imagePrompt: 'cinematic atmospheric YouTube content creation studio photo'
+            if (validVideos.length > 0) {
+                // Break top videos into kinetic scenes (up to 30 scenes max for high engagement)
+                validVideos.forEach(v => {
+                    const vScenes = breakScriptIntoScenes(v.script);
+                    allScenes.push(...vScenes);
                 });
             }
 
-            // Step A: Download AI Background Images for Scenes
+            // Cap at 35 scenes max for optimum render speed & performance
+            if (allScenes.length > 35) {
+                allScenes = allScenes.slice(0, 35);
+            }
+
+            if (allScenes.length === 0) {
+                allScenes.push({
+                    index: 1,
+                    text: `Welcome to YouTube Channel ${handle}`,
+                    wordCount: 5,
+                    duration: 3.5,
+                    emoji: '🚀',
+                    imagePrompt: 'cinematic photographic YouTube content creation studio background'
+                });
+            }
+
+            // Step A: Download AI Background Images in Parallel Batches
             const imagePaths = await generateAllSceneImages(
-                scenes, 
+                allScenes, 
                 aspectRatio, 
                 jobTempDir, 
                 (current, total, text) => {
                     const startPct = outputMode === 'both' ? 55 : 45;
                     const endPct = outputMode === 'both' ? 70 : 65;
                     job.progress = Math.round(startPct + (current / total) * (endPct - startPct));
-                    job.message = `AI Image Gen [${current}/${total}]: "${text.substring(0, 35)}..."`;
+                    job.message = `AI Image Gen [${current}/${total}]: "${(text || '').substring(0, 35)}..."`;
                 }
             );
 
@@ -342,7 +352,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
             const videoFilePath = path.join(outputDir, videoFileName);
 
             await renderKineticVideo(
-                scenes, 
+                allScenes, 
                 imagePaths, 
                 aspectRatio, 
                 videoFilePath, 
@@ -362,7 +372,6 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
         job.progress = 100;
         job.message = 'Processing completed successfully!';
 
-        // Ensure temp cleanup if only PDF mode was run
         if (outputMode === 'pdf' && fs.existsSync(jobTempDir)) {
             try { fs.rmSync(jobTempDir, { recursive: true, force: true }); } catch (e) {}
         }
