@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Channel Script Extractor & PDF Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Noto Sans Devanagari"', 'sans-serif']
+                    },
+                    colors: {
+                        yt: {
+                            red: '#FF0000',
+                            dark: '#0F0F0F',
+                            card: '#181818',
+                            gray: '#272727'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: radial-gradient(circle at 50% -20%, #ff000033, rgba(15, 15, 15, 1) 70%);
+        }
+        .glass-card {
+            background: rgba(24, 24, 27, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .progress-bar-animated {
+            background-size: 30px 30px;
+            background-image: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.2) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0.2) 75%,
+                transparent 75%,
+                transparent
+            );
+            animation: animate-stripes 1s linear infinite;
+        }
+        @keyframes animate-stripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 30px 0; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans gradient-bg antialiased selection:bg-red-600 selection:text-white">
+
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-800/80 glass-card sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-600/30">
+                    <i class="fa-brands fa-youtube text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        YouTube Script <span class="text-red-500 font-extrabold">PDF Generator</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Extract video scripts & convert to E-Book PDF</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Server Online
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-6 py-12">
+
+        <!-- Hero Title -->
+        <div class="text-center mb-10">
+            <span class="inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 mb-4">
+                <i class="fa-solid fa-list-ol mr-1"></i> Custom Video Count Filter Added
+            </span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight mb-4">
+                Convert Channel Scripts into a <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-400 to-orange-400">PDF E-Book</span>
+            </h2>
+            <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto">
+                Select whether you want the Latest 10, 20, 50, 80, 100, or ALL videos extracted into your PDF E-book.
+            </p>
+        </div>
+
+        <!-- Input Card -->
+        <div class="glass-card rounded-2xl p-8 mb-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-red-600/10 rounded-full blur-3xl"></div>
+
+            <form id="extractForm" onsubmit="handleFormSubmit(event)" class="relative z-10 space-y-6">
+                <!-- Channel URL Input -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-200 mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-link text-red-500 mr-2"></i>YouTube Channel URL or Handle</span>
+                        <span class="text-xs text-slate-400 font-normal">e.g. @channelname or https://www.youtube.com/@channel</span>
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="channelUrl" 
+                            placeholder="https://www.youtube.com/@channelname" 
+                            required
+                            class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-5 py-4 pl-12 text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all font-mono text-sm"
+                        >
+                        <i class="fa-brands fa-youtube text-slate-500 text-lg absolute left-4 top-1/2 -translate-y-1/2"></i>
+                    </div>
+                </div>
+
+                <!-- Video Count Selector -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-200 mb-2">
+                        <i class="fa-solid fa-filter text-red-500 mr-2"></i>How Many Videos to Extract?
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs font-semibold">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="videoLimit" value="10" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-red-500 peer-checked:bg-red-500/20 peer-checked:text-white transition-all">
+                                ⚡ 10 Videos
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="videoLimit" value="20" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-red-500 peer-checked:bg-red-500/20 peer-checked:text-white transition-all">
+                                🚀 20 Videos
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="videoLimit" value="50" checked class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-red-500 peer-checked:bg-red-500/20 peer-checked:text-white transition-all">
+                                ⭐ 50 Videos
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="videoLimit" value="80" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-red-500 peer-checked:bg-red-500/20 peer-checked:text-white transition-all">
+                                📈 80 Videos
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="videoLimit" value="100" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-red-500 peer-checked:bg-red-500/20 peer-checked:text-white transition-all">
+                                🎯 100 Videos
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="videoLimit" value="all" class="peer hidden">
+                            <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-red-500 peer-checked:bg-red-500/20 peer-checked:text-white transition-all">
+                                🌐 All Videos
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <span class="text-slate-400 font-medium">Quick Try:</span>
+                    <button type="button" onclick="setPreset('@CodeWithHarry')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors">
+                        @CodeWithHarry
+                    </button>
+                    <button type="button" onclick="setPreset('@TechnicalGuruji')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors">
+                        @TechnicalGuruji
+                    </button>
+                    <button type="button" onclick="setPreset('@MrBeast')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors">
+                        @MrBeast
+                    </button>
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                    class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-red-600/30 hover:shadow-red-600/50 transition-all duration-200 flex items-center justify-center gap-3 text-base cursor-pointer"
+                >
+                    <i class="fa-solid fa-file-pdf text-xl"></i>
+                    <span>Extract Scripts & Generate PDF</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Progress Card -->
+        <div id="progressCard" class="hidden glass-card rounded-2xl p-8 mb-8 border-red-500/30 transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                        <i class="fa-solid fa-spinner fa-spin text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white" id="statusTitle">Processing Channel...</h3>
+                        <p class="text-xs text-slate-400" id="statusSubtitle">Fetching channel data and video list</p>
+                    </div>
+                </div>
+                <span class="text-2xl font-extrabold text-red-400" id="progressPercent">0%</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-900 rounded-full h-3 mb-6 overflow-hidden p-0.5 border border-slate-800">
+                <div id="progressBar" class="bg-gradient-to-r from-red-600 to-rose-500 h-full rounded-full transition-all duration-300 progress-bar-animated" style="width: 5%"></div>
+            </div>
+
+            <!-- Live Logs Terminal -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300">
+                <div class="flex items-center justify-between text-slate-500 mb-2 pb-2 border-b border-slate-800">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-terminal"></i> Live Extraction Logs</span>
+                    <span id="logCounter">0 videos processed</span>
+                </div>
+                <div id="logConsole" class="space-y-1.5 max-h-40 overflow-y-auto pr-2 text-slate-300">
+                    <div class="text-slate-500">[Info] Initializing connection to server...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Card -->
+        <div id="successCard" class="hidden glass-card rounded-2xl p-8 mb-8 border-emerald-500/30 bg-emerald-950/10 transition-all">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-emerald-500/30">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-white mb-2">PDF Generated Successfully!</h3>
+                <p class="text-slate-300 text-sm max-w-md mx-auto mb-6" id="successMessage">
+                    Your complete YouTube channel scripts E-Book has been compiled into a PDF.
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a 
+                        id="downloadBtn" 
+                        href="#" 
+                        download 
+                        class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-emerald-600/50 transition-all flex items-center justify-center gap-2"
+                    >
+                        <i class="fa-solid fa-download text-lg"></i>
+                        <span>Download PDF E-Book</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Card -->
+        <div id="errorCard" class="hidden glass-card rounded-2xl p-6 mb-8 border-red-500/40 bg-red-950/20">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                    <h4 class="text-base font-bold text-white mb-1">Extraction Failed</h4>
+                    <p class="text-sm text-red-300" id="errorMessage">Something went wrong.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function setPreset(handle) {
+            document.getElementById('channelUrl').value = handle;
+        }
+
+        function addConsoleLog(msg, type = 'info') {
+            const consoleBox = document.getElementById('logConsole');
+            const entry = document.createElement('div');
+            entry.className = type === 'error' ? 'text-red-400 font-semibold' : type === 'success' ? 'text-emerald-400 font-semibold' : 'text-slate-300';
+            const time = new Date().toLocaleTimeString();
+            entry.innerText = `[${time}] ${msg}`;
+            consoleBox.appendChild(entry);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const channelUrl = document.getElementById('channelUrl').value.trim();
+            if (!channelUrl) return;
+
+            const videoLimit = document.querySelector('input[name="videoLimit"]:checked').value;
+
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            document.getElementById('progressCard').classList.remove('hidden');
+            document.getElementById('successCard').classList.add('hidden');
+            document.getElementById('errorCard').classList.add('hidden');
+            
+            document.getElementById('logConsole').innerHTML = '';
+            addConsoleLog(`Starting extraction for ${channelUrl} (Limit: ${videoLimit === 'all' ? 'All Videos' : videoLimit + ' Videos'})...`);
+
+            try {
+                const response = await fetch('/api/extract', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channelUrl, videoLimit })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Failed to start extraction');
+                }
+
+                const jobId = data.jobId;
+                listenToProgress(jobId);
+
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        function listenToProgress(jobId) {
+            const eventSource = new EventSource(`/api/progress/${jobId}`);
+
+            eventSource.onmessage = (event) => {
+                const job = JSON.parse(event.data);
+
+                document.getElementById('statusTitle').innerText = job.message || 'Processing...';
+                document.getElementById('progressPercent').innerText = `${job.progress || 0}%`;
+                document.getElementById('progressBar').style.width = `${job.progress || 0}%`;
+
+                if (job.totalVideos > 0) {
+                    document.getElementById('logCounter').innerText = `${job.processedCount || 0} / ${job.totalVideos} videos processed`;
+                }
+
+                if (job.currentVideoTitle) {
+                    addConsoleLog(`[${job.processedCount}/${job.totalVideos}] Script extracted: "${job.currentVideoTitle}"`);
+                }
+
+                if (job.status === 'completed') {
+                    eventSource.close();
+                    showSuccess(job);
+                } else if (job.status === 'error') {
+                    eventSource.close();
+                    showError(job.message);
+                }
+            };
+
+            eventSource.onerror = () => {
+                eventSource.close();
+            };
+        }
+
+        function showSuccess(job) {
+            document.getElementById('progressCard').classList.add('hidden');
+            document.getElementById('successCard').classList.remove('hidden');
+            
+            document.getElementById('downloadBtn').href = job.pdfUrl;
+            document.getElementById('successMessage').innerText = `Successfully extracted ${job.totalVideos} video scripts from ${job.handle} into ${job.fileName}!`;
+
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function showError(msg) {
+            document.getElementById('progressCard').classList.add('hidden');
+            document.getElementById('errorCard').classList.remove('hidden');
+            document.getElementById('errorMessage').innerText = msg;
+
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    </script>
+</body>
+</html>

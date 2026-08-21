@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+
+# Generated output files & datasets
+*.pdf
+*_scripts.html
+channel.html
+channel_utf8.html
+channel_scripts/
+*.jsonl
+videos.json
+extracted_scripts.json
+
+# OS / Environment files
+.DS_Store
+Thumbs.db
+*.log
