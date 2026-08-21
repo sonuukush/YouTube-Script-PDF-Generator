@@ -93,6 +93,7 @@ app.post('/api/extract', async (req, res) => {
         currentVideoTitle: '',
         pdfUrl: '',
         videoUrl: '',
+        videoList: [],
         fileName: ''
     });
 
@@ -169,7 +170,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
             job.processedCount = i + 1;
             job.currentVideoTitle = item.title;
 
-            job.progress = Math.round(15 + ((i + 1) / videoList.length) * 25);
+            job.progress = Math.round(15 + ((i + 1) / videoList.length) * 20);
             job.message = `Extracting Script [${i + 1}/${videoList.length}]: "${item.title}"`;
 
             let scriptText = '';
@@ -198,14 +199,14 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
                 wordCount: scriptText.startsWith('[Script') ? 0 : scriptText.split(/\s+/).length
             });
 
-            await new Promise(r => setTimeout(r, 80));
+            await new Promise(r => setTimeout(r, 60));
         }
 
         // --- PIPELINE 1: GENERATE PDF E-BOOK ---
         if (outputMode === 'pdf' || outputMode === 'both') {
             job.status = 'generating_pdf';
             job.message = 'Generating HTML E-Book and rendering PDF document...';
-            job.progress = outputMode === 'both' ? 45 : 85;
+            job.progress = outputMode === 'both' ? 40 : 85;
 
             const availableScriptsCount = fullData.filter(d => !d.script.startsWith('[Script')).length;
             const scopeText = videoLimit === 'all' ? 'All Videos' : `Latest ${videoList.length} Videos`;
@@ -290,89 +291,72 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
             job.pdfUrl = `/api/download/${pdfFileName}`;
         }
 
-        // --- PIPELINE 2: GENERATE KINETIC TYPOGRAPHY VIDEO ---
+        // --- PIPELINE 2: GENERATE INDIVIDUAL KINETIC TYPOGRAPHY MP4 VIDEOS FOR EACH VIDEO ---
         if (outputMode === 'video' || outputMode === 'both') {
-            job.status = 'generating_scene_images';
-            job.message = 'Breaking scripts into kinetic scenes & downloading AI background images...';
-            job.progress = outputMode === 'both' ? 55 : 45;
-
-            // Gather all available script scenes
-            let allScenes = [];
+            job.status = 'generating_kinetic_videos';
             const validVideos = fullData.filter(d => d.wordCount > 0);
-
-            if (validVideos.length > 0) {
-                // Break top videos into kinetic scenes (up to 30 scenes max for high engagement)
-                validVideos.forEach(v => {
-                    const vScenes = breakScriptIntoScenes(v.script);
-                    allScenes.push(...vScenes);
-                });
-            }
-
-            // Cap at 35 scenes max for optimum render speed & performance
-            if (allScenes.length > 35) {
-                allScenes = allScenes.slice(0, 35);
-            }
-
-            if (allScenes.length === 0) {
-                allScenes.push({
-                    index: 1,
-                    text: `Welcome to YouTube Channel ${handle}`,
-                    wordCount: 5,
-                    duration: 3.5,
-                    emoji: '🚀',
-                    imagePrompt: 'cinematic photographic YouTube content creation studio background'
-                });
-            }
-
-            // Step A: Download AI Background Images in Parallel Batches
-            const imagePaths = await generateAllSceneImages(
-                allScenes, 
-                aspectRatio, 
-                jobTempDir, 
-                (current, total, text) => {
-                    const startPct = outputMode === 'both' ? 55 : 45;
-                    const endPct = outputMode === 'both' ? 70 : 65;
-                    job.progress = Math.round(startPct + (current / total) * (endPct - startPct));
-                    job.message = `AI Image Gen [${current}/${total}]: "${(text || '').substring(0, 35)}..."`;
-                }
-            );
-
-            // Step B: Render Kinetic Video (Canvas + FFmpeg)
-            job.status = 'rendering_kinetic_video';
-            job.message = `Rendering Kinetic Typography Video (${aspectRatio})...`;
-            job.progress = outputMode === 'both' ? 72 : 68;
-
             const outputDir = path.join(__dirname, 'output_videos');
+            
             if (!fs.existsSync(outputDir)) {
                 fs.mkdirSync(outputDir, { recursive: true });
             }
 
+            const generatedVideos = [];
             const cleanRatioName = aspectRatio.replace(':', 'x');
-            const videoFileName = `${sanitizeName}_Kinetic_${cleanRatioName}.mp4`;
-            const videoFilePath = path.join(outputDir, videoFileName);
 
-            await renderKineticVideo(
-                allScenes, 
-                imagePaths, 
-                aspectRatio, 
-                videoFilePath, 
-                jobTempDir,
-                (renderedScene, totalScenes) => {
-                    const startPct = outputMode === 'both' ? 72 : 68;
-                    const endPct = 95;
-                    job.progress = Math.round(startPct + (renderedScene / totalScenes) * (endPct - startPct));
-                    job.message = `Rendering Video Scene [${renderedScene}/${totalScenes}]`;
-                }
-            );
+            for (let vIdx = 0; vIdx < validVideos.length; vIdx++) {
+                const video = validVideos[vIdx];
+                const startPct = outputMode === 'both' ? 45 : 35;
+                job.progress = Math.round(startPct + ((vIdx + 1) / validVideos.length) * 60);
+                job.message = `Rendering Kinetic Video [${vIdx + 1}/${validVideos.length}]: "${video.title}"`;
 
-            job.videoUrl = `/api/download-video/${videoFileName}`;
+                const scenes = breakScriptIntoScenes(video.script);
+                if (scenes.length === 0) continue;
+
+                // Cap scenes per video to 15 key phrase chunks for optimum video length
+                const videoScenes = scenes.slice(0, 15);
+
+                const subTempDir = path.join(jobTempDir, `v_${vIdx + 1}`);
+                const imagePaths = await generateAllSceneImages(
+                    videoScenes,
+                    aspectRatio,
+                    subTempDir,
+                    null
+                );
+
+                const safeVideoTitle = video.title.replace(/[@/\\?%*:|"<>]/g, '_').substring(0, 30);
+                const videoFileName = `${sanitizeName}_v${vIdx + 1}_${safeVideoTitle}_${cleanRatioName}.mp4`;
+                const videoFilePath = path.join(outputDir, videoFileName);
+
+                await renderKineticVideo(
+                    videoScenes,
+                    imagePaths,
+                    aspectRatio,
+                    videoFilePath,
+                    subTempDir,
+                    null
+                );
+
+                generatedVideos.push({
+                    index: vIdx + 1,
+                    title: video.title,
+                    url: video.url,
+                    fileName: videoFileName,
+                    downloadUrl: `/api/download-video/${videoFileName}`
+                });
+            }
+
+            job.videoList = generatedVideos;
+            if (generatedVideos.length > 0) {
+                job.videoUrl = generatedVideos[0].downloadUrl; // Top video default
+            }
         }
 
         job.status = 'completed';
         job.progress = 100;
         job.message = 'Processing completed successfully!';
 
-        if (outputMode === 'pdf' && fs.existsSync(jobTempDir)) {
+        if (fs.existsSync(jobTempDir)) {
             try { fs.rmSync(jobTempDir, { recursive: true, force: true }); } catch (e) {}
         }
 
