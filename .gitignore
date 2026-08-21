@@ -1,15 +1,22 @@
 # Node dependencies
 node_modules/
 
+# Temporary & Output Directories
+temp_jobs/
+output_videos/
+channel_scripts/
+
 # Generated output files & datasets
 *.pdf
+*.mp4
 *_scripts.html
 channel.html
 channel_utf8.html
-channel_scripts/
 *.jsonl
 videos.json
 extracted_scripts.json
+test_render.js
+test_hinglish.js
 
 # OS / Environment files
 .DS_Store

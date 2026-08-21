@@ -5,6 +5,10 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
+const { breakScriptIntoScenes } = require('./lib/scene_breakdown');
+const { generateAllSceneImages } = require('./lib/image_generator');
+const { renderKineticVideo } = require('./lib/video_renderer');
+
 const app = express();
 const PORT = 3000;
 
@@ -51,9 +55,15 @@ app.get('/api/progress/:jobId', (req, res) => {
     });
 });
 
-// Start Channel Extraction API
+// Start Channel Extraction & Processing API
 app.post('/api/extract', async (req, res) => {
-    const { channelUrl, videoLimit = '50' } = req.body;
+    const { 
+        channelUrl, 
+        videoLimit = '50',
+        outputMode = 'pdf', // 'pdf', 'video', 'both'
+        aspectRatio = '16:9' // '16:9', '9:16'
+    } = req.body;
+
     if (!channelUrl) {
         return res.status(400).json({ error: 'Channel URL or handle is required' });
     }
@@ -74,6 +84,8 @@ app.post('/api/extract', async (req, res) => {
         jobId,
         handle,
         videoLimit,
+        outputMode,
+        aspectRatio,
         status: 'starting',
         message: 'Initializing channel video lookup...',
         progress: 5,
@@ -81,24 +93,28 @@ app.post('/api/extract', async (req, res) => {
         processedCount: 0,
         currentVideoTitle: '',
         pdfUrl: '',
+        videoUrl: '',
         fileName: ''
     });
 
-    res.json({ jobId, message: 'Extraction started' });
+    res.json({ jobId, message: 'Processing started' });
 
-    runExtractionTask(jobId, handle, sanitizeName, videoLimit);
+    runExtractionTask(jobId, handle, sanitizeName, videoLimit, outputMode, aspectRatio);
 });
 
-async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
+async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, outputMode, aspectRatio) {
     const job = activeJobs.get(jobId);
+    const jobTempDir = path.join(__dirname, 'temp_jobs', jobId);
 
     try {
+        fs.mkdirSync(jobTempDir, { recursive: true });
+
         job.status = 'fetching_list';
         const limitLabel = videoLimit === 'all' ? 'all' : `latest ${videoLimit}`;
         job.message = `Fetching ${limitLabel} videos for ${handle}...`;
         job.progress = 10;
 
-        const jsonlFile = path.join(__dirname, `${sanitizeName}_playlist.jsonl`);
+        const jsonlFile = path.join(jobTempDir, `${sanitizeName}_playlist.jsonl`);
         const limitFlag = (videoLimit && videoLimit !== 'all') ? `--playlist-end ${parseInt(videoLimit, 10)}` : '';
         const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j ${limitFlag} "https://www.youtube.com/${handle}/videos" > "${jsonlFile}"`;
 
@@ -129,7 +145,6 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
             } catch (e) {}
         }
 
-        // Additional safeguard for limit
         if (videoLimit && videoLimit !== 'all') {
             const maxCount = parseInt(videoLimit, 10);
             if (videoList.length > maxCount) {
@@ -154,8 +169,10 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
             const item = videoList[i];
             job.processedCount = i + 1;
             job.currentVideoTitle = item.title;
-            job.progress = Math.round(15 + ((i + 1) / videoList.length) * 65);
-            job.message = `Processing [${i + 1}/${videoList.length}]: "${item.title}"`;
+
+            // Share initial 40% progress for script extraction
+            job.progress = Math.round(15 + ((i + 1) / videoList.length) * 25);
+            job.message = `Extracting Script [${i + 1}/${videoList.length}]: "${item.title}"`;
 
             let scriptText = '';
             try {
@@ -183,18 +200,19 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
                 wordCount: scriptText.startsWith('[Script') ? 0 : scriptText.split(/\s+/).length
             });
 
-            await new Promise(r => setTimeout(r, 120));
+            await new Promise(r => setTimeout(r, 100));
         }
 
-        job.status = 'generating_pdf';
-        job.message = 'Generating HTML E-Book and rendering PDF document...';
-        job.progress = 85;
+        // --- PIPELINE 1: GENERATE PDF E-BOOK ---
+        if (outputMode === 'pdf' || outputMode === 'both') {
+            job.status = 'generating_pdf';
+            job.message = 'Generating HTML E-Book and rendering PDF document...';
+            job.progress = outputMode === 'both' ? 45 : 85;
 
-        const availableScriptsCount = fullData.filter(d => !d.script.startsWith('[Script')).length;
-        const scopeText = videoLimit === 'all' ? 'All Videos' : `Latest ${videoList.length} Videos`;
+            const availableScriptsCount = fullData.filter(d => !d.script.startsWith('[Script')).length;
+            const scopeText = videoLimit === 'all' ? 'All Videos' : `Latest ${videoList.length} Videos`;
 
-        // Generate HTML
-        let htmlContent = `<!DOCTYPE html>
+            let htmlContent = `<!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
@@ -259,28 +277,100 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
 </body>
 </html>`;
 
-        const suffix = videoLimit === 'all' ? '_All' : `_Top${videoLimit}`;
-        const htmlFileName = `${sanitizeName}${suffix}_scripts.html`;
-        const pdfFileName = `${sanitizeName}${suffix}_scripts.pdf`;
-        const htmlPath = path.join(__dirname, htmlFileName);
-        const pdfPath = path.join(__dirname, pdfFileName);
+            const suffix = videoLimit === 'all' ? '_All' : `_Top${videoLimit}`;
+            const htmlFileName = `${sanitizeName}${suffix}_scripts.html`;
+            const pdfFileName = `${sanitizeName}${suffix}_scripts.pdf`;
+            const htmlPath = path.join(__dirname, htmlFileName);
+            const pdfPath = path.join(__dirname, pdfFileName);
 
-        fs.writeFileSync(htmlPath, htmlContent, 'utf8');
+            fs.writeFileSync(htmlPath, htmlContent, 'utf8');
 
-        // Convert HTML to PDF using Edge Headless
-        const cmd = `"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --headless --disable-gpu --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
-        execSync(cmd);
+            const cmd = `"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --headless --disable-gpu --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
+            execSync(cmd);
+
+            job.fileName = pdfFileName;
+            job.pdfUrl = `/api/download/${pdfFileName}`;
+        }
+
+        // --- PIPELINE 2: GENERATE KINETIC TYPOGRAPHY VIDEO ---
+        if (outputMode === 'video' || outputMode === 'both') {
+            job.status = 'generating_scene_images';
+            job.message = 'Breaking scripts into kinetic scenes & downloading AI background images...';
+            job.progress = outputMode === 'both' ? 55 : 45;
+
+            // Use the top video's script or combine scenes
+            const targetVideo = fullData.find(d => d.wordCount > 0) || fullData[0];
+            const scenes = breakScriptIntoScenes(targetVideo ? targetVideo.script : '');
+
+            if (scenes.length === 0) {
+                // Fallback scene if script unavailable
+                scenes.push({
+                    index: 1,
+                    text: targetVideo ? targetVideo.title : `YouTube Channel ${handle}`,
+                    wordCount: 5,
+                    duration: 3.5,
+                    emoji: '🚀',
+                    imagePrompt: 'cinematic atmospheric YouTube content creation studio photo'
+                });
+            }
+
+            // Step A: Download AI Background Images for Scenes
+            const imagePaths = await generateAllSceneImages(
+                scenes, 
+                aspectRatio, 
+                jobTempDir, 
+                (current, total, text) => {
+                    const startPct = outputMode === 'both' ? 55 : 45;
+                    const endPct = outputMode === 'both' ? 70 : 65;
+                    job.progress = Math.round(startPct + (current / total) * (endPct - startPct));
+                    job.message = `AI Image Gen [${current}/${total}]: "${text.substring(0, 35)}..."`;
+                }
+            );
+
+            // Step B: Render Kinetic Video (Canvas + FFmpeg)
+            job.status = 'rendering_kinetic_video';
+            job.message = `Rendering Kinetic Typography Video (${aspectRatio})...`;
+            job.progress = outputMode === 'both' ? 72 : 68;
+
+            const outputDir = path.join(__dirname, 'output_videos');
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const cleanRatioName = aspectRatio.replace(':', 'x');
+            const videoFileName = `${sanitizeName}_Kinetic_${cleanRatioName}.mp4`;
+            const videoFilePath = path.join(outputDir, videoFileName);
+
+            await renderKineticVideo(
+                scenes, 
+                imagePaths, 
+                aspectRatio, 
+                videoFilePath, 
+                jobTempDir,
+                (renderedScene, totalScenes) => {
+                    const startPct = outputMode === 'both' ? 72 : 68;
+                    const endPct = 95;
+                    job.progress = Math.round(startPct + (renderedScene / totalScenes) * (endPct - startPct));
+                    job.message = `Rendering Video Scene [${renderedScene}/${totalScenes}]`;
+                }
+            );
+
+            job.videoUrl = `/api/download-video/${videoFileName}`;
+        }
 
         job.status = 'completed';
         job.progress = 100;
-        job.message = 'PDF generated successfully!';
-        job.fileName = pdfFileName;
-        job.pdfUrl = `/api/download/${pdfFileName}`;
+        job.message = 'Processing completed successfully!';
+
+        // Ensure temp cleanup if only PDF mode was run
+        if (outputMode === 'pdf' && fs.existsSync(jobTempDir)) {
+            try { fs.rmSync(jobTempDir, { recursive: true, force: true }); } catch (e) {}
+        }
 
     } catch (err) {
         console.error('Task error:', err);
         job.status = 'error';
-        job.message = `Error generating PDF: ${err.message}`;
+        job.message = `Error processing request: ${err.message}`;
     }
 }
 
@@ -296,9 +386,21 @@ app.get('/api/download/:filename', (req, res) => {
     }
 });
 
+// Download Video MP4 API
+app.get('/api/download-video/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'output_videos', filename);
+
+    if (fs.existsSync(filePath)) {
+        res.download(filePath, filename);
+    } else {
+        res.status(404).json({ error: 'Video file not found' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🚀 YouTube Script PDF Web App running at:`);
+    console.log(`🚀 YouTube Script PDF & Kinetic Video Web App running at:`);
     console.log(`👉 http://localhost:${PORT}`);
     console.log(`====================================================`);
 });
