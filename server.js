@@ -5,6 +5,15 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
+const { checkOllamaAvailability, generateText, DEFAULT_MODEL } = require('./lib/local_llm');
+const { 
+    rankVideosByRetentionScore, 
+    extractHookText, 
+    analyzeLengthVsViewsPattern, 
+    extractTrendingKeywords 
+} = require('./lib/competitor_analyzer');
+const { generateCompetitorPdfReport } = require('./lib/competitor_report_pdf');
+
 const app = express();
 const PORT = 3000;
 
@@ -50,7 +59,14 @@ app.get('/api/progress/:jobId', (req, res) => {
     });
 });
 
-// Start Channel Extraction & Processing API
+// Check Local Ollama Health & Model Availability
+app.get('/api/ollama-status', async (req, res) => {
+    const model = req.query.model || DEFAULT_MODEL;
+    const result = await checkOllamaAvailability(model);
+    res.json(result);
+});
+
+// --- EXISTING PIPELINE: PDF Script E-Book Extraction ---
 app.post('/api/extract', async (req, res) => {
     const { channelUrl, videoLimit = '50' } = req.body;
 
@@ -284,6 +300,266 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
     }
 }
 
+// --- NEW FEATURE: CHANNEL GROWTH RESEARCH MODE (OLLAMA LOCAL LLM) ---
+app.post('/api/analyze-competitor', async (req, res) => {
+    const { channelUrl, modelName = DEFAULT_MODEL } = req.body;
+
+    if (!channelUrl) {
+        return res.status(400).json({ error: 'Competitor Channel URL or handle is required' });
+    }
+
+    let handle = channelUrl.trim()
+        .replace(/https?:\/\/(www\.)?youtube\.com\//i, '')
+        .replace(/\/videos\/?$/, '')
+        .replace(/\/$/, '');
+
+    if (!handle.startsWith('@')) {
+        handle = '@' + handle;
+    }
+
+    const sanitizeName = handle.replace(/[@/\\?%*:|"<>]/g, '_');
+    const jobId = 'job_growth_' + Date.now();
+
+    activeJobs.set(jobId, {
+        jobId,
+        handle,
+        modelName,
+        status: 'checking_ollama',
+        message: `Checking local Ollama status for model '${modelName}'...`,
+        progress: 3,
+        pdfUrl: '',
+        fileName: ''
+    });
+
+    res.json({ jobId, message: 'Competitor Research task started' });
+
+    runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName);
+});
+
+async function runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName) {
+    const job = activeJobs.get(jobId);
+
+    try {
+        // STEP 0: STARTUP CHECK FOR OLLAMA & MODEL AVAILABILITY
+        job.status = 'checking_ollama';
+        job.message = `Verifying local Ollama server at http://localhost:11434 (Model: '${modelName}')...`;
+        job.progress = 5;
+
+        const ollamaCheck = await checkOllamaAvailability(modelName);
+        if (!ollamaCheck.success) {
+            job.status = 'error';
+            job.message = `Startup Check Failed: ${ollamaCheck.message}`;
+            return;
+        }
+
+        // STEP 1: FETCH ALL COMPETITOR VIDEOS METADATA
+        job.status = 'fetching_channel_videos';
+        job.message = `Fetching all videos & engagement metadata for competitor ${handle}...`;
+        job.progress = 10;
+
+        const jsonlFile = path.join(__dirname, `${sanitizeName}_competitor_playlist.jsonl`);
+        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j "https://www.youtube.com/${handle}/videos" > "${jsonlFile}"`;
+
+        try {
+            execSync(ytdlpCmd, { shell: 'powershell.exe', cwd: __dirname });
+        } catch (e) {
+            console.log('yt-dlp competitor warning:', e.message);
+        }
+
+        if (!fs.existsSync(jsonlFile)) {
+            job.status = 'error';
+            job.message = `Could not find or fetch video metadata for competitor handle: ${handle}`;
+            return;
+        }
+
+        const content = fs.readFileSync(jsonlFile, 'utf16le');
+        const lines = content.trim().split('\n').filter(Boolean);
+
+        let rawVideos = [];
+        for (const line of lines) {
+            try {
+                const data = JSON.parse(line);
+                rawVideos.push({
+                    id: data.id,
+                    title: data.title || `Video ${data.id}`,
+                    url: `https://www.youtube.com/watch?v=${data.id}`,
+                    viewCount: data.view_count || data.views || 0,
+                    likeCount: data.like_count || data.likes || 0,
+                    durationSec: data.duration || 0,
+                    uploadDate: data.upload_date || ''
+                });
+            } catch (e) {}
+        }
+
+        if (rawVideos.length === 0) {
+            job.status = 'error';
+            job.message = `No video metadata found for competitor ${handle}.`;
+            return;
+        }
+
+        // STEP 2: RANK VIDEOS BY COMPOSITE RETENTION PROXY SCORE
+        job.status = 'ranking_by_retention_score';
+        job.message = `Analyzing ${rawVideos.length} videos. Computing retention scores...`;
+        job.progress = 20;
+
+        const topVideos = rankVideosByRetentionScore(rawVideos);
+        
+        // STEP 3: EXTRACT TRANSCRIPTS & HOOKS FOR TOP 20 VIDEOS
+        job.status = 'extracting_hooks';
+        job.message = `Extracting transcripts and opening hooks for Top ${topVideos.length} videos...`;
+        job.progress = 30;
+
+        const fullData = [];
+        const hooks = [];
+
+        for (let i = 0; i < topVideos.length; i++) {
+            const item = topVideos[i];
+            job.progress = Math.round(30 + ((i + 1) / topVideos.length) * 15);
+            job.message = `Extracting Transcript & Hook [${i + 1}/${topVideos.length}]: "${item.title}"`;
+
+            let scriptText = '';
+            try {
+                const transcript = await YoutubeTranscript.fetchTranscript(item.id, { lang: 'hi' });
+                if (transcript && transcript.length > 0) {
+                    scriptText = transcript.map(t => t.text).join(' ');
+                } else {
+                    const fallback = await YoutubeTranscript.fetchTranscript(item.id);
+                    if (fallback && fallback.length > 0) {
+                        scriptText = fallback.map(t => t.text).join(' ');
+                    } else {
+                        scriptText = '[Script / Captions Not Available for this video]';
+                    }
+                }
+            } catch (err) {
+                scriptText = '[Script / Captions Not Available for this video]';
+            }
+
+            const hookText = extractHookText(scriptText);
+
+            fullData.push({
+                index: i + 1,
+                id: item.id,
+                title: item.title,
+                url: item.url,
+                script: scriptText,
+                hook: hookText,
+                wordCount: scriptText.startsWith('[Script') ? 0 : scriptText.split(/\s+/).length
+            });
+
+            hooks.push({
+                index: i + 1,
+                videoTitle: item.title,
+                videoUrl: item.url,
+                hookText: hookText
+            });
+
+            await new Promise(r => setTimeout(r, 40));
+        }
+
+        // STEP 4: GENERATE 20 NEW ORIGINAL SCRIPTS VIA LOCAL OLLAMA LLM
+        job.status = 'generating_new_scripts';
+        job.message = `Generating 20 New Original Scripts via Local Ollama LLM ('${modelName}')...`;
+        job.progress = 45;
+
+        const generatedScripts = [];
+
+        for (let i = 0; i < fullData.length; i++) {
+            const videoData = fullData[i];
+            job.progress = Math.round(45 + ((i + 1) / fullData.length) * 35);
+            job.message = `Generating Script & Titles [${i + 1}/${fullData.length}]: Inspired by "${videoData.title}"`;
+
+            const snippet = videoData.script.length > 600 ? videoData.script.substring(0, 600) + '...' : videoData.script;
+
+            // Strict copyright guardrail prompt
+            const scriptPrompt = `
+You are an expert YouTube content strategist and creative scriptwriter.
+
+CRITICAL COPYRIGHT & ORIGINALITY GUARDRAIL:
+You MUST write 100% ORIGINAL, FRESH content. Do NOT copy, paraphrase, or summarize sentences, structure, or wording from the source transcript below. Use the topic/theme ONLY as creative inspiration.
+
+TOPIC / THEME OF ORIGINAL COMPETITOR VIDEO:
+Title: "${videoData.title}"
+Source Excerpt: "${snippet}"
+
+INSTRUCTIONS:
+Write a brand new, highly engaging YouTube video script (approx 350-500 words) covering this same topic.
+- Create a completely new opening hook, a unique flow/structure, fresh real-world examples, and your own clear explanations.
+- Structure with section titles: [Hook], [Introduction], [Core Key Insights], [Practical Takeaways], and [Call To Action].
+- Write in an engaging, conversational tone suitable for YouTube creators (Hindi/Hinglish or English).
+`;
+
+            const titlesPrompt = `
+Based on the YouTube video concept about "${videoData.title}", generate 7 irresistible, high-CTR YouTube video title options:
+
+Provide ONLY a numbered list (1 to 7) of catchy, click-worthy YouTube titles in Hinglish / English.
+`;
+
+            let newScriptText = '';
+            let titlesText = '';
+
+            try {
+                newScriptText = await generateText(scriptPrompt, modelName);
+                titlesText = await generateText(titlesPrompt, modelName);
+            } catch (err) {
+                console.error(`Ollama generation error for video ${i + 1}:`, err);
+                newScriptText = `[Error generating script via Ollama: ${err.message}]`;
+                titlesText = `1. ${videoData.title} (Fresh Take)\n2. Secrets Behind ${videoData.title}`;
+            }
+
+            // Extract first title suggestion as main title
+            const firstTitleMatch = titlesText.match(/1\.\s*(.+)/);
+            const suggestedMainTitle = firstTitleMatch ? firstTitleMatch[1].trim() : videoData.title;
+
+            generatedScripts.push({
+                index: i + 1,
+                inspiredByTitle: videoData.title,
+                inspiredByUrl: videoData.url,
+                suggestedMainTitle,
+                titlesText,
+                scriptText: newScriptText
+            });
+        }
+
+        // STEP 5: ANALYZE NICHE TRENDS & DURATION PATTERNS
+        job.status = 'analyzing_trends';
+        job.message = 'Analyzing niche keyword trends & video duration performance...';
+        job.progress = 85;
+
+        const lengthAnalysis = analyzeLengthVsViewsPattern(topVideos);
+        const trendingKeywords = extractTrendingKeywords(fullData);
+
+        // STEP 6: BUILD STYLED PDF REPORT
+        job.status = 'building_pdf';
+        job.message = 'Compiling Research Report HTML and rendering PDF document...';
+        job.progress = 92;
+
+        const pdfFileName = `${sanitizeName}_Competitor_Growth_Report.pdf`;
+        const pdfPath = path.join(__dirname, pdfFileName);
+
+        generateCompetitorPdfReport({
+            handle,
+            modelName,
+            topVideos,
+            hooks,
+            lengthAnalysis,
+            trendingKeywords,
+            generatedScripts
+        }, pdfPath);
+
+        job.fileName = pdfFileName;
+        job.pdfUrl = `/api/download/${pdfFileName}`;
+
+        job.status = 'completed';
+        job.progress = 100;
+        job.message = 'Competitor Research & AI Script Generation completed successfully!';
+
+    } catch (err) {
+        console.error('Competitor Task error:', err);
+        job.status = 'error';
+        job.message = `Error processing request: ${err.message}`;
+    }
+}
+
 // Download PDF API
 app.get('/api/download/:filename', (req, res) => {
     const filename = req.params.filename;
@@ -298,7 +574,7 @@ app.get('/api/download/:filename', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🚀 YouTube Script PDF Generator running at:`);
+    console.log(`🚀 YouTube Script PDF & Competitor Research Studio running at:`);
     console.log(`👉 http://localhost:${PORT}`);
     console.log(`====================================================`);
 });
