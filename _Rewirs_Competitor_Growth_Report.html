@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>Channel Growth Research & AI Content Report - @Rewirs</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+        @page { size: A4; margin: 15mm; }
+        body { 
+            font-family: 'Noto Sans Devanagari', 'Mangal', 'Nirmala UI', 'Plus Jakarta Sans', Arial, sans-serif; 
+            color: #1e293b; 
+            line-height: 1.6; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #fff; 
+        }
+        
+        .cover-page { 
+            page-break-after: always; 
+            min-height: 85vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+            border: 3px solid #2563eb; 
+            padding: 40px; 
+            border-radius: 16px; 
+            margin-top: 10px; 
+            background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+        }
+        .report-badge {
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .cover-title { font-size: 30px; font-weight: 800; color: #0f172a; margin-bottom: 10px; }
+        .cover-subtitle { font-size: 18px; color: #2563eb; font-weight: 600; margin-bottom: 30px; }
+        .cover-meta { 
+            font-size: 14px; 
+            background: #ffffff; 
+            padding: 22px 35px; 
+            border-radius: 12px; 
+            border: 1px solid #cbd5e1; 
+            text-align: left; 
+            display: inline-block; 
+            line-height: 2;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header { 
+            font-size: 22px; 
+            font-weight: 800; 
+            color: #0f172a; 
+            border-bottom: 3px solid #2563eb; 
+            padding-bottom: 8px; 
+            margin-top: 35px; 
+            margin-bottom: 20px;
+            page-break-before: always;
+        }
+        .first-section { page-break-before: avoid; }
+
+        .card { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            padding: 18px 22px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+        th { background: #1e293b; color: #ffffff; font-weight: 700; text-align: left; padding: 10px 12px; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f8fafc; }
+
+        .highlight-box {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .hook-item {
+            background: #f8fafc;
+            border-left: 4px solid #f59e0b;
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+        }
+        .hook-title { font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 4px; }
+        .hook-text { font-style: italic; color: #475569; font-size: 13px; }
+
+        .script-card {
+            page-break-inside: avoid;
+            margin-bottom: 30px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            background: #ffffff;
+        }
+        .script-badge {
+            display: inline-block;
+            background: #10b981;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .script-title { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        .script-meta { font-size: 12px; color: #64748b; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; }
+        
+        .titles-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+        }
+        .titles-header { font-weight: 700; color: #166534; font-size: 13px; margin-bottom: 6px; }
+
+        .script-content {
+            font-size: 14px;
+            color: #334155;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            background: #fafafa;
+            padding: 18px;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- COVER PAGE -->
+    <div class="cover-page">
+        <div class="report-badge">🚀 Channel Growth & AI Content Research</div>
+        <div class="cover-title">Competitor Analysis & Original Content Generator</div>
+        <div class="cover-subtitle">Target Channel: @Rewirs</div>
+        <div class="cover-meta">
+            <strong>Target Channel Handle:</strong> @Rewirs<br>
+            <strong>Analysis Scope:</strong> Top 20 High-Retention Performing Videos<br>
+            <strong>AI Text Generation Engine:</strong> Pollinations.ai (Free Cloud API)<br>
+            <strong>New Original Scripts Generated:</strong> 20<br>
+            <strong>Report Date:</strong> August 22, 2026
+        </div>
+    </div>
+
+    <!-- SECTION 1: EXECUTIVE INSIGHTS -->
+    <div class="section-header first-section">📊 Section 1: Executive Niche Insights</div>
+    
+    <div class="highlight-box">
+        <strong>💡 Optimal Video Length Pattern:</strong><br>
+        Videos in the <strong>6-10 min (Mid Form)</strong> category had the highest average performance for this competitor channel, averaging <strong>6,133,333 views</strong> per video.
+    </div>
+
+    <h3 style="font-size:16px; color:#0f172a; margin-top:20px;">⏱️ Video Length vs Average Views Breakdown</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Video Length Range</th>
+                <th>Video Count</th>
+                <th>Total Combined Views</th>
+                <th>Average Views / Video</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+                <tr>
+                    <td><strong>0-3 min (Short Form)</strong></td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td><strong style="color:#2563eb;">0</strong></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>3-6 min (Mid-Short)</strong></td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td><strong style="color:#2563eb;">0</strong></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>6-10 min (Mid Form)</strong></td>
+                    <td>18</td>
+                    <td>110,400,000</td>
+                    <td><strong style="color:#2563eb;">6,133,333</strong></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>10+ min (Long Form)</strong></td>
+                    <td>2</td>
+                    <td>10,100,000</td>
+                    <td><strong style="color:#2563eb;">5,050,000</strong></td>
+                </tr>
+            
+        </tbody>
+    </table>
+
+    <h3 style="font-size:16px; color:#0f172a; margin-top:25px;">🔥 Top Recurring Niche Keywords & Topics</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Topic / Keyword</th>
+                <th>Frequency Across Transcripts</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+                <tr>
+                    <td>#1</td>
+                    <td><strong style="color:#0f172a;">में</strong></td>
+                    <td>707 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#2</td>
+                    <td><strong style="color:#0f172a;">हैं</strong></td>
+                    <td>470 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#3</td>
+                    <td><strong style="color:#0f172a;">नहीं</strong></td>
+                    <td>376 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#4</td>
+                    <td><strong style="color:#0f172a;">आपको</strong></td>
+                    <td>365 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#5</td>
+                    <td><strong style="color:#0f172a;">अपने</strong></td>
+                    <td>311 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#6</td>
+                    <td><strong style="color:#0f172a;">करने</strong></td>
+                    <td>286 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#7</td>
+                    <td><strong style="color:#0f172a;">लिए</strong></td>
+                    <td>261 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#8</td>
+                    <td><strong style="color:#0f172a;">आपके</strong></td>
+                    <td>218 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#9</td>
+                    <td><strong style="color:#0f172a;">करते</strong></td>
+                    <td>213 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#10</td>
+                    <td><strong style="color:#0f172a;">ज्यादा</strong></td>
+                    <td>203 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#11</td>
+                    <td><strong style="color:#0f172a;">कुछ</strong></td>
+                    <td>198 mentions</td>
+                </tr>
+            
+                <tr>
+                    <td>#12</td>
+                    <td><strong style="color:#0f172a;">करना</strong></td>
+                    <td>196 mentions</td>
+                </tr>
+            
+        </tbody>
+    </table>
+
+    <!-- SECTION 2: TOP 20 COMPETITOR VIDEOS & HOOKS -->
+    <div class="section-header">🔥 Section 2: Top 20 High-Retention Videos & Hooks</div>
+    
+    <p style="font-size:13px; color:#64748b; margin-bottom:15px;">
+        Ranked by composite view-retention score (views ratio, engagement likes, and recency factor).
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Video Title</th>
+                <th>Views</th>
+                <th>Likes</th>
+                <th>Duration</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+                <tr>
+                    <td><strong>#1</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=DuX7De5xGBE" target="_blank" style="color:#2563eb; text-decoration:none;">रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND</a></td>
+                    <td>16,000,000</td>
+                    <td>N/A</td>
+                    <td>8:34</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">965</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#2</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=JE9-lo_dQ2U" target="_blank" style="color:#2563eb; text-decoration:none;">Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds</a></td>
+                    <td>10,000,000</td>
+                    <td>N/A</td>
+                    <td>9:04</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">642</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#3</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=2Kxt0POlaiM" target="_blank" style="color:#2563eb; text-decoration:none;">What Your Favorite COLOR Says About You !</a></td>
+                    <td>9,400,000</td>
+                    <td>N/A</td>
+                    <td>9:00</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">610</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#4</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=9x0wvLhb0Os" target="_blank" style="color:#2563eb; text-decoration:none;">12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs</a></td>
+                    <td>9,200,000</td>
+                    <td>N/A</td>
+                    <td>9:16</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">599</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#5</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=H88rzXxy1as" target="_blank" style="color:#2563eb; text-decoration:none;">ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs</a></td>
+                    <td>8,400,000</td>
+                    <td>N/A</td>
+                    <td>8:11</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">556</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#6</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=R2Aeoi-tCG4" target="_blank" style="color:#2563eb; text-decoration:none;">7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power</a></td>
+                    <td>6,700,000</td>
+                    <td>N/A</td>
+                    <td>9:06</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">463</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#7</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=DTkuwMSpP20" target="_blank" style="color:#2563eb; text-decoration:none;">BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life</a></td>
+                    <td>6,500,000</td>
+                    <td>N/A</td>
+                    <td>10:46</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">452</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#8</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=idg_e5zk_VI" target="_blank" style="color:#2563eb; text-decoration:none;">7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs</a></td>
+                    <td>6,000,000</td>
+                    <td>N/A</td>
+                    <td>8:16</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">425</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#9</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=8SRbeyKvodw" target="_blank" style="color:#2563eb; text-decoration:none;">कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video</a></td>
+                    <td>5,000,000</td>
+                    <td>N/A</td>
+                    <td>8:11</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">370</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#10</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=uSCHmIQ9mo0" target="_blank" style="color:#2563eb; text-decoration:none;">This Video Will Change Your Life Completely - Best Motivational Video by Rewirs</a></td>
+                    <td>4,800,000</td>
+                    <td>N/A</td>
+                    <td>9:36</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">359</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#11</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=8jxNU5Sju8E" target="_blank" style="color:#2563eb; text-decoration:none;">21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational)</a></td>
+                    <td>4,600,000</td>
+                    <td>N/A</td>
+                    <td>9:04</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">348</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#12</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=Y7pVKtOXMJY" target="_blank" style="color:#2563eb; text-decoration:none;">चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs</a></td>
+                    <td>4,100,000</td>
+                    <td>N/A</td>
+                    <td>8:56</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">321</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#13</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=Mbtl6QxQFtw" target="_blank" style="color:#2563eb; text-decoration:none;">Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs</a></td>
+                    <td>4,000,000</td>
+                    <td>N/A</td>
+                    <td>8:08</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">315</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#14</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=AkBvgsTzrV4" target="_blank" style="color:#2563eb; text-decoration:none;">ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You</a></td>
+                    <td>3,900,000</td>
+                    <td>N/A</td>
+                    <td>8:18</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">310</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#15</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=8lLU7wac0Og" target="_blank" style="color:#2563eb; text-decoration:none;">Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs</a></td>
+                    <td>3,800,000</td>
+                    <td>N/A</td>
+                    <td>8:55</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">304</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#16</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=6ibfiOzfElI" target="_blank" style="color:#2563eb; text-decoration:none;">Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs</a></td>
+                    <td>3,800,000</td>
+                    <td>N/A</td>
+                    <td>8:10</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">304</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#17</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=bk9LCo29Aiw" target="_blank" style="color:#2563eb; text-decoration:none;">10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs</a></td>
+                    <td>3,700,000</td>
+                    <td>N/A</td>
+                    <td>8:07</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">299</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#18</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=DbrC3tyaI9M" target="_blank" style="color:#2563eb; text-decoration:none;">Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞</a></td>
+                    <td>3,600,000</td>
+                    <td>N/A</td>
+                    <td>10:05</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">293</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#19</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=R2xk_LsETm0" target="_blank" style="color:#2563eb; text-decoration:none;">How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare</a></td>
+                    <td>3,600,000</td>
+                    <td>N/A</td>
+                    <td>8:48</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">293</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>#20</strong></td>
+                    <td><a href="https://www.youtube.com/watch?v=VdMJvu7-vRw" target="_blank" style="color:#2563eb; text-decoration:none;">14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs</a></td>
+                    <td>3,400,000</td>
+                    <td>N/A</td>
+                    <td>9:06</td>
+                    <td><span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:10px;">282</span></td>
+                </tr>
+            
+        </tbody>
+    </table>
+
+    <h3 style="font-size:16px; color:#0f172a; margin-top:30px; margin-bottom:15px;">🎣 First 15-30 Second Opening Hooks Analysis</h3>
+    
+        <div class="hook-item">
+            <div class="hook-title">#1. रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND</div>
+            <div class="hook-text">"तो दोस्तों इस वीडियो में हम आपके साथ टैन मिनट रुक शेयर करने वाले हैं और आपको assistant मॉर्निंग है बताने वाले हैं जिन्हें आप रोज सिर्फ 10 मिनट पर करोगे तो आप कि ब्रेन पावर इंप्रूव होगी आप दिनभर ले सिर्फ नहीं करोगे आप प्रोक्रेस्टिनेशन की आदत से बाहर..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#2. Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds</div>
+            <div class="hook-text">"तो दोस्तों इस वीडियो में हम आपको बताएंगे ऐसे फाइबर Amazing यू बीन सक्सेस बताएंगे जो आपके फ्रेंड को हेल्दी बनाने के साथ उसके फोकस कंसंट्रेशन और मैम रिपोर्ट को बढ़ाकर फास्ट बनाएंगे जॉन पर यह वही बोरिंग और पुराने एक्सरसाइज नहीं होने वाली जो आपको आलरेडी बताएं लाइक ब्रीडिंग..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#3. What Your Favorite COLOR Says About You !</div>
+            <div class="hook-text">"हेलो दोस्तों कलर साइकोलॉजिस्ट एंजेला व्हाइट कहती है कि हम सभी का कोई ना कोई फेवरेट कलर होता है जो हमारे पर्सनल अटैक और बिहेवियर के बारे में बहुत कुछ पता है इसीलिए बड़े बड़े ब्रांड कंपनी इस वेबसाइट एप्स और विजुअल आर्टिस्ट हमारे भाग्य के अकॉर्डिंग पर्टिकुलर कलर का..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#4. 12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs</div>
+            <div class="hook-text">"हेलो दोस्तों हर साल दुनिया भर में हजारों साइंटिफिक रिसर्च पेपर्स प्रवेश कर जाते हैं जिसमें साइकोलॉजिकल रिसर्च का भी बहुत बड़ा हिस्सा होता है पर देखा जाए तो उनका टेक्नोलॉजिकल रिसर्च और स्टडी इसको रीड करना एक नॉर्मल इंसान के लिए जितना मुश्किल होता है उन बातों को रियल..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#5. ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs</div>
+            <div class="hook-text">"क्यों अंदुरूटेड लोन मास्क और रोनाल्डो हमेशा अपने हाथों को कुछ इस तरह से रखते हैं आखिर क्यों वर्ल्ड के कुछ बड़े-बड़े लीडर्स और इंफ्रास्तों लोग अपने हाथों को हमेशा एक पर्टिकुलर पोजीशन में रखते हैं नहीं ये सिर्फ उनका कोई तरीका नहीं है बल्कि दरअसल इसके पीछे एक ऐसा..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#6. 7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power</div>
+            <div class="hook-text">"तो दोस्तों अगर आप चाहते हैं कि हर कोई आपकी रिस्पेक्ट और वैल्यू करें आपकी और आपकी बात की वैल्यू रखते हुए वहीं करें जैसा आपने उनसे बोला है तो आपको अपने आपको एक पावरफुल पर्सन बनाना होगा क्योंकि आज के टाइम पर लोग उन्हें फॉलो करते हैं जो उनसे..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#7. BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life</div>
+            <div class="hook-text">"कि डेवलपमेंटल मॉलिक्यूलर बायोलॉजी नोट्स एंड रिसर्च कंसलटेंट जानुडी ना कहते हैं कि हमारी सारी प्रॉब्लम्स की जड़ हमारे दिमाग का सोचने का तरीका है और यह तबीयत ठीक हो सकता है जब हम दिमाग के जरूरी है उसको छान लें तो इसीलिए उन्होंने हमारे लिए न्यूयार्क टाइम्स की बेस्ट..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#8. 7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs</div>
+            <div class="hook-text">"जरा एक बार सोच के देखो कि आपको कैसा लगेगा अगर आपकी जिंदगी अगले सात दिनों में पूरी तरह से गारंटीड बदल जाए आपको अच्छा लगेगा ना आप और ज्यादा कॉन्फिडेंट और पावरफुल महसूस करोगे ना बस ऐसा ही आप इस वीडियो को देखने के बाद गारंटीड महसूस करने वाले..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#9. कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video</div>
+            <div class="hook-text">"साइलेंस एक बेवकूफ की पहचान उसकी बटन से होती है और एक समझदार इंसान की पहचान उसके शांत रहने से एवं दोस्तों आचार्य चाणक्य ने भी ये कहा की जी व्यक्ति ने ये समझ लिया की क्या कब कहा और कितना बोलना है उसे व्यक्ति को सफल होने से कोई..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#10. This Video Will Change Your Life Completely - Best Motivational Video by Rewirs</div>
+            <div class="hook-text">"आप जितना ज्यादा अपने आप को और अपनी लाइफ को लोगों के सामने रखोगे उतने ज्यादा चांस है कि आप जिंदगी में कभी कुछ बड़ा अचीव नहीं कर पाओगे क्योंकि अगर आप हमारी मानो तो हर किसी को अपनी लाइफ में एक ना एक बार इस दुनिया और लोगों से..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#11. 21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational)</div>
+            <div class="hook-text">"दोस्तों मंक मोड के अकॉर्डिंग अगर किसी पर्सन की लाइफ में से पर्पस फोकस और डिसिप्लिन को निकाल दिया जाए तो लॉन्ग टर्म में अगर उसकी लाइफ में कुछ बचेगा तो वो है सिर्फ दुख एक मीनिंग्स लाइफ और बहुत सारा पेन क्योंकि इन तीन चीजों से ही आप अपनी..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#12. चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs</div>
+            <div class="hook-text">"कम्युनिकेशन स्किल एक ऐसी स्किल है जो चाहे आप स्टूडेंट हो एंप्लॉय बिजनेसमैन हो या कुछ भी और किसी भी आगे में हो ये एक स्केल सीखना हर किसी के लिए जरूरी होती ही होती है चाहे आपकी प्रोफेशनल लाइफ हो या पर्सनल लाइफ हो आप तभी अपना इंप्रेशन दल..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#13. Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs</div>
+            <div class="hook-text">"अंकित बायन पुरिया ने अपनी नेचुरल बॉडी और डेडिकेशन से जो अचीव किया है वो किसी से छुपा नहीं है यह बंदा कभी जिम नहीं गया अपनी देसी डाइट फॉलो करके घर पे सपाटे मार-मार के और नेचुरल वर्कआउट करके इसने ऐसी बॉडी बना ली जो कि बड़े से बड़े..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#14. ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You</div>
+            <div class="hook-text">"हेलो दोस्तों अमेरिका में 911 टेरेरिस्ट अटैक के बाद एक फैन ऑफिसर ओसामा बिन लादेन के बॉडीगार्ड को इंटेरोगेट यानी कि उससे पूछताछ कर रहा था अब शाम की बॉडीगार्ड अमेरिकन से बहुत नफरत करता था इसीलिए वह इंटेरोगेशन में सहयोग करने को राजी नहीं था कि वो उल्टा अमेरिकंस..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#15. Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs</div>
+            <div class="hook-text">"[संगीत] दोस्तों आपने ये एक बात हर किसी के मुंह से सुनी होगी कि हाइट सिर्फ प्यूबर्टी में ही बढ़ती है 18 की एज के बाद हाइट बढ़ना इंपॉसिबल है और हाइट पूरी तरह आपके पेरेंट्स और फैमिली बैकग्राउंड के जेनेटिक्स पे डिपेंड करती है जिसमें आप कुछ नहीं कर..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#16. Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs</div>
+            <div class="hook-text">"[संगीत] बेयर ग्रिल्स यह वो रियल लाइफ हीरो है जिसने हम सबने बचपन में ऐसे-ऐसे कारनामे करते हुए देखा है जो हमारे रंग टे खड़े कर देते हैं जो करने का हम कभी सपने में भी नहीं सोच सकते वो यह बंदा सच में करके दिखा देता था अपने स्ट्रांग..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#17. 10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs</div>
+            <div class="hook-text">"हेलो [संगीत] दोस्तों अमेरिकन आंत्रप्रनर एंजेल इंवेस्टर उबर एंड प्रोडक्टिविटी एक्सपर्ट टीम पर इस कहते हैं कि अगर आप अपनी सुबह जीतने पर है तो आप अपना बाकी का दिन भी जीत लेते हैं लेकिन वहीं अगर आप अपनी सुबह की शुरुआत गलत तरीके से करते हो तो आपका हर..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#18. Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞</div>
+            <div class="hook-text">"पिछले कुछ बाईट दशकों में यह पुरी दुनिया और टेक्नोलॉजी हमारी सोच से कई गुना ज्यादा आगे बढ़ चुकी है फीमेल कुछ मूवमेंट्स और रिवॉल्यूशंस के जरिए पहले से ज्यादा इंडिपेंडेंट मेंटली और इमोशनली स्ट्रांग प्रोफेशनली सक्सेसफुल और ओवरऑल भी स्ट्रांग हो चुकी हैं लेकिन वहीं ये सब चीज जितनी..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#19. How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare</div>
+            <div class="hook-text">"है दोस्तों कि आप जानते है इनॉरमस का आईक्यू 160 पांच सीनियर साइंटिस्ट अल्बर्ट आइंस्टाइन का 160 था आइजैक न्यूटन का 198 और हमारे इंडिया के अनुष्का दीक्षित का आईक्यू 160 टू है जो कि आइंस्टाइन के आईक्यू से भी ज्यादा है वैसे तो दुनिया के सभी लोगों का एवरेज..."</div>
+        </div>
+    
+        <div class="hook-item">
+            <div class="hook-title">#20. 14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs</div>
+            <div class="hook-text">"हेलो दोस्तों human साइकोलॉजिकल साइंटिफिक वे में जितना डिपॉजिटरी और रिसर्च कंडक्टेड और टफ है उससे कई गुना ज्यादा आसान और इंट्रस्टिंग साइकोलॉजिकल टिप्स को अपने रियल लाइफ में अप्लाई करना होता है तो दोस्तों इसीलिए आज हम आपके साथ ऐसे प्रोटीन साइकॉलजिकल ट्रिक शेयर करने वाले हैं जिन्हें आप..."</div>
+        </div>
+    
+
+    <!-- SECTION 3: NEW ORIGINAL SCRIPTS GENERATED BY POLLINATIONS.AI -->
+    <div class="section-header">💡 Section 3: 20 Original AI Scripts & Title Suggestions</div>
+    <p style="font-size:13px; color:#64748b; margin-bottom:20px;">
+        Generated using Pollinations.ai Free Text API. Guardrails applied: 100% original script structure, explanations, and wording inspired by competitor topics.
+    </p>
+
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #1</div>
+            <div class="script-title">New Script: रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=DuX7De5xGBE" target="_blank">रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND (Fresh Take Idea)
+2. Secrets Behind रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;रोज़ सुबह सिर्फ 10 मिनट - MORNING HABITS FOR HEALTHY MIND&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #2</div>
+            <div class="script-title">New Script: Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=JE9-lo_dQ2U" target="_blank">Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds (Fresh Take Idea)
+2. Secrets Behind Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;Brain Exercises For Healthy Brain - Every Morning ONLY 25 Seconds&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #3</div>
+            <div class="script-title">New Script: What Your Favorite COLOR Says About You ! (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=2Kxt0POlaiM" target="_blank">What Your Favorite COLOR Says About You !</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. What Your Favorite COLOR Says About You ! (Fresh Take Idea)
+2. Secrets Behind What Your Favorite COLOR Says About You !</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;What Your Favorite COLOR Says About You !&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #4</div>
+            <div class="script-title">New Script: 12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=9x0wvLhb0Os" target="_blank">12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. 12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs (Fresh Take Idea)
+2. Secrets Behind 12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;12 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS  - THAT WILL MAKE YOUR LIFE EASY | Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #5</div>
+            <div class="script-title">New Script: ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=H88rzXxy1as" target="_blank">ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs (Fresh Take Idea)
+2. Secrets Behind ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;ये Secret सिर्फ 1% लोग जानते हैं | Most Powerful Hand Gestures &amp; Mudras for Success &amp; Money | Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #6</div>
+            <div class="script-title">New Script: 7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=R2Aeoi-tCG4" target="_blank">7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. 7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power (Fresh Take Idea)
+2. Secrets Behind 7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;7 ट्रिक्स सीख लो सब आपकी Value करेंगे  | 7 Psychological Laws Of Power&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #7</div>
+            <div class="script-title">New Script: BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=DTkuwMSpP20" target="_blank">BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life (Fresh Take Idea)
+2. Secrets Behind BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;BRAIN RULES Book Summary in Hindi by John Medina | 12 Brain Rules That Will Change Your Life&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #8</div>
+            <div class="script-title">New Script: 7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=idg_e5zk_VI" target="_blank">7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. 7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs (Fresh Take Idea)
+2. Secrets Behind 7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;7 Days Challenge to Change Yourself Completely 🔥 - Best Motivational Video by Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #9</div>
+            <div class="script-title">New Script: कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=8SRbeyKvodw" target="_blank">कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video (Fresh Take Idea)
+2. Secrets Behind कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;कम बोलने की ताकत जान लो । 6 Qualities of LESS SPEAKING PEOPLE | Motivational Video&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #10</div>
+            <div class="script-title">New Script: This Video Will Change Your Life Completely - Best Motivational Video by Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=uSCHmIQ9mo0" target="_blank">This Video Will Change Your Life Completely - Best Motivational Video by Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. This Video Will Change Your Life Completely - Best Motivational Video by Rewirs (Fresh Take Idea)
+2. Secrets Behind This Video Will Change Your Life Completely - Best Motivational Video by Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;This Video Will Change Your Life Completely - Best Motivational Video by Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #11</div>
+            <div class="script-title">New Script: 21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational) (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=8jxNU5Sju8E" target="_blank">21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational)</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. 21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational) (Fresh Take Idea)
+2. Secrets Behind 21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational)</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;21 दिनों में 95% लोगों से आगे निकल जाओ (MONK MODE) | What is MONK MODE in Hindi | (Motivational)&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #12</div>
+            <div class="script-title">New Script: चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=Y7pVKtOXMJY" target="_blank">चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs (Fresh Take Idea)
+2. Secrets Behind चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;चालाकी से बात करना सीखो : Communication Skills Tips: How to Talk to ANYONE | Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #13</div>
+            <div class="script-title">New Script: Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=Mbtl6QxQFtw" target="_blank">Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs (Fresh Take Idea)
+2. Secrets Behind Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;Build Body at Home Fast (Easy Tips) | Full Home Workout To Gain Weight - Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #14</div>
+            <div class="script-title">New Script: ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=AkBvgsTzrV4" target="_blank">ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You (Fresh Take Idea)
+2. Secrets Behind ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;ये 7 ट्रिक्स सीख लो सब आपकी RESPECT करेंगे  | 7 Tips To Make Anyone Respect You&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #15</div>
+            <div class="script-title">New Script: Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=8lLU7wac0Og" target="_blank">Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs (Fresh Take Idea)
+2. Secrets Behind Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;Grow Height Fast In 1 Month - Height Increase Exercise | Height Kaise Badhaye | Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #16</div>
+            <div class="script-title">New Script: Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=6ibfiOzfElI" target="_blank">Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs (Fresh Take Idea)
+2. Secrets Behind Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;Every Youth MUST WATCH this Motivational Video🔥 | MOTIVATIONAL STORY VIDEO FOR STUDENTS | Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #17</div>
+            <div class="script-title">New Script: 10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=bk9LCo29Aiw" target="_blank">10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. 10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs (Fresh Take Idea)
+2. Secrets Behind 10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;10 Habits that will Ruin Your Life || 10 Morning Bad Habits that Damage Your Life || Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #18</div>
+            <div class="script-title">New Script: Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞 (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=DbrC3tyaI9M" target="_blank">Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞 (Fresh Take Idea)
+2. Secrets Behind Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;Sirf Males Hi Iss Video Ko Dekhen!! Please 🙏🔞&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #19</div>
+            <div class="script-title">New Script: How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=R2xk_LsETm0" target="_blank">How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare (Fresh Take Idea)
+2. Secrets Behind How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;How to Improve Your Brain Power | दिमाग को कैसे तेज करें | IQ Level Increase Kaise Kare&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+        <div class="script-card">
+            <div class="script-badge">Original Script Idea #20</div>
+            <div class="script-title">New Script: 14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs (Fresh Take Idea)</div>
+            <div class="script-meta">
+                <strong>Inspired By Competitor Video:</strong> <a href="https://www.youtube.com/watch?v=VdMJvu7-vRw" target="_blank">14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs</a>
+            </div>
+
+            <div class="titles-box">
+                <div class="titles-header">🎯 High-CTR YouTube Title Suggestions (Pick One):</div>
+                <div style="font-size:13px; color:#14532d; white-space:pre-wrap; line-height:1.6;">1. 14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs (Fresh Take Idea)
+2. Secrets Behind 14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs</div>
+            </div>
+
+            <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">📝 Complete Original Script:</h4>
+            <div class="script-content">[Script generation skipped for &quot;14 &quot;SHOCKING&quot; PSYCHOLOGICAL FACTS - THAT WILL MAKE YOUR LIFE EASY | Rewirs&quot; — text API temporarily unavailable]</div>
+        </div>
+    
+
+</body>
+</html>

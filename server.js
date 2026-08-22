@@ -5,7 +5,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
-const { checkOllamaAvailability, generateText, DEFAULT_MODEL } = require('./lib/local_llm');
+const { generateText, sleep } = require('./lib/text_generator');
 const { 
     rankVideosByRetentionScore, 
     extractHookText, 
@@ -96,13 +96,6 @@ app.get('/api/progress/:jobId', (req, res) => {
     req.on('close', () => {
         clearInterval(interval);
     });
-});
-
-// Check Local Ollama Health & Model Availability
-app.get('/api/ollama-status', async (req, res) => {
-    const model = req.query.model || DEFAULT_MODEL;
-    const result = await checkOllamaAvailability(model);
-    res.json(result);
 });
 
 // --- EXISTING PIPELINE: PDF Script E-Book Extraction ---
@@ -330,9 +323,9 @@ async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, 
     }
 }
 
-// --- NEW FEATURE: CHANNEL GROWTH RESEARCH MODE (OLLAMA LOCAL LLM) ---
+// --- NEW FEATURE: CHANNEL GROWTH RESEARCH MODE (POLLINATIONS.AI CLOUD TEXT API) ---
 app.post('/api/analyze-competitor', async (req, res) => {
-    const { channelUrl, modelName = DEFAULT_MODEL } = req.body;
+    const { channelUrl } = req.body;
 
     if (!channelUrl) {
         return res.status(400).json({ error: 'Competitor Channel URL or handle is required' });
@@ -344,38 +337,25 @@ app.post('/api/analyze-competitor', async (req, res) => {
     activeJobs.set(jobId, {
         jobId,
         handle: displayHandle,
-        modelName,
-        status: 'checking_ollama',
-        message: `Checking local Ollama status for model '${modelName}'...`,
-        progress: 3,
+        status: 'starting',
+        message: `Initializing competitor research for ${displayHandle}...`,
+        progress: 5,
         pdfUrl: '',
         fileName: ''
     });
 
     res.json({ jobId, message: 'Competitor Research task started' });
 
-    runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl, modelName);
+    runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl);
 });
 
-async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl, modelName) {
+async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl) {
     const job = activeJobs.get(jobId);
 
     try {
-        // STEP 0: STARTUP CHECK FOR OLLAMA & MODEL AVAILABILITY
-        job.status = 'checking_ollama';
-        job.message = `Verifying local Ollama server at http://localhost:11434 (Model: '${modelName}')...`;
-        job.progress = 5;
-
-        const ollamaCheck = await checkOllamaAvailability(modelName);
-        if (!ollamaCheck.success) {
-            job.status = 'error';
-            job.message = `Startup Check Failed: ${ollamaCheck.message}`;
-            return;
-        }
-
         // STEP 1: FETCH ALL COMPETITOR VIDEOS METADATA
         job.status = 'fetching_channel_videos';
-        job.message = `Fetching all videos & engagement metadata for competitor ${displayHandle}...`;
+        job.message = `Fetching videos & engagement metadata for competitor ${displayHandle}...`;
         job.progress = 10;
 
         const jsonlFile = path.join(__dirname, `${sanitizeName}_competitor_playlist.jsonl`);
@@ -477,9 +457,9 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
             await new Promise(r => setTimeout(r, 40));
         }
 
-        // STEP 4: GENERATE 20 NEW ORIGINAL SCRIPTS VIA LOCAL OLLAMA LLM
+        // STEP 4: GENERATE 20 NEW ORIGINAL SCRIPTS VIA POLLINATIONS.AI CLOUD TEXT API
         job.status = 'generating_new_scripts';
-        job.message = `Generating 20 New Original Scripts via Local Ollama LLM ('${modelName}')...`;
+        job.message = `Generating 20 New Original Scripts via Pollinations.ai Text API...`;
         job.progress = 45;
 
         const generatedScripts = [];
@@ -519,12 +499,18 @@ Provide ONLY a numbered list (1 to 7) of catchy, click-worthy YouTube titles in 
             let titlesText = '';
 
             try {
-                newScriptText = await generateText(scriptPrompt, modelName);
-                titlesText = await generateText(titlesPrompt, modelName);
+                // Rate-limiting delay before calling free text API
+                await sleep(800);
+                newScriptText = await generateText(scriptPrompt);
+
+                await sleep(500);
+                titlesText = await generateText(titlesPrompt);
+
             } catch (err) {
-                console.error(`Ollama generation error for video ${i + 1}:`, err);
-                newScriptText = `[Error generating script via Ollama: ${err.message}]`;
-                titlesText = `1. ${videoData.title} (Fresh Take)\n2. Secrets Behind ${videoData.title}`;
+                console.warn(`Pollinations text API skipped video [${i + 1}]: ${err.message}`);
+                job.message = `Skipped script for '${videoData.title}' — text API unavailable (${err.message})`;
+                newScriptText = `[Script generation skipped for "${videoData.title}" — text API temporarily unavailable]`;
+                titlesText = `1. ${videoData.title} (Fresh Take Idea)\n2. Secrets Behind ${videoData.title}`;
             }
 
             // Extract first title suggestion as main title
@@ -559,7 +545,6 @@ Provide ONLY a numbered list (1 to 7) of catchy, click-worthy YouTube titles in 
 
         generateCompetitorPdfReport({
             handle: displayHandle,
-            modelName,
             topVideos,
             hooks,
             lengthAnalysis,
