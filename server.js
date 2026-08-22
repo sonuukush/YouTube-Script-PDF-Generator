@@ -367,6 +367,10 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
         job.progress = 10;
 
         const jsonlFile = path.join(__dirname, `${sanitizeName}_competitor_playlist.jsonl`);
+        if (fs.existsSync(jsonlFile)) {
+            try { fs.unlinkSync(jsonlFile); } catch (e) {}
+        }
+
         const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j "${targetUrl}" > "${jsonlFile}"`;
 
         try {
@@ -412,7 +416,35 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
         job.progress = 20;
 
         const limitNum = parseInt(competitorLimit, 10) || 5;
-        const topVideos = rankVideosByRetentionScore(rawVideos, limitNum);
+        const candidateVideos = rankVideosByRetentionScore(rawVideos, limitNum);
+
+        // Enrich candidate videos with detailed likes metadata via yt-dlp --dump-json
+        job.message = `Fetching detailed engagement & likes metadata for Top ${candidateVideos.length} videos...`;
+        for (let i = 0; i < candidateVideos.length; i++) {
+            const item = candidateVideos[i];
+            try {
+                const dumpCmd = `.\\yt-dlp.exe --dump-json "https://www.youtube.com/watch?v=${item.id}"`;
+                const dumpJsonStr = execSync(dumpCmd, { shell: 'powershell.exe', cwd: __dirname, encoding: 'utf8' });
+                if (dumpJsonStr) {
+                    const detail = JSON.parse(dumpJsonStr);
+                    if (detail.like_count !== undefined && detail.like_count !== null) {
+                        item.likeCount = detail.like_count;
+                        item.likes = detail.like_count;
+                    }
+                    if (detail.view_count) item.viewCount = detail.view_count;
+                    if (detail.duration) item.durationSec = detail.duration;
+                }
+            } catch (e) {
+                console.log(`yt-dlp dump-json info note for video ${item.id}:`, e.message);
+            }
+
+            if (!item.likeCount && item.likeCount !== 0) {
+                job.message = `Likes count hidden by creator for '${item.title}' — using view-only retention scoring`;
+            }
+        }
+
+        // Re-rank with accurate likes metadata
+        const topVideos = rankVideosByRetentionScore(candidateVideos, limitNum);
         
         // STEP 3: EXTRACT TRANSCRIPTS & HOOKS FOR TOP VIDEOS
         job.status = 'extracting_hooks';
