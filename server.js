@@ -5,7 +5,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
-const { generateText, sleep } = require('./lib/text_generator');
+const { generateText, generateScriptAndTitlesForVideo, sleep } = require('./lib/text_generator');
 const { 
     rankVideosByRetentionScore, 
     extractHookText, 
@@ -459,9 +459,9 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
             await new Promise(r => setTimeout(r, 40));
         }
 
-        // STEP 4: GENERATE 20 NEW ORIGINAL SCRIPTS VIA POLLINATIONS.AI CLOUD TEXT API
+        // STEP 4: GENERATE NEW ORIGINAL SCRIPTS VIA AI TEXT GENERATOR
         job.status = 'generating_new_scripts';
-        job.message = `Generating 20 New Original Scripts via Pollinations.ai Text API...`;
+        job.message = `Generating ${fullData.length} New Original Scripts...`;
         job.progress = 45;
 
         const generatedScripts = [];
@@ -469,63 +469,17 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
         for (let i = 0; i < fullData.length; i++) {
             const videoData = fullData[i];
             job.progress = Math.round(45 + ((i + 1) / fullData.length) * 35);
-            job.message = `Generating Script & Titles [${i + 1}/${fullData.length}]: Inspired by "${videoData.title}"`;
+            job.message = `Generating Original Script & Titles [${i + 1}/${fullData.length}]: "${videoData.title}"`;
 
-            const snippet = videoData.script.length > 600 ? videoData.script.substring(0, 600) + '...' : videoData.script;
-
-            // Strict copyright guardrail prompt
-            const scriptPrompt = `
-You are an expert YouTube content strategist and creative scriptwriter.
-
-CRITICAL COPYRIGHT & ORIGINALITY GUARDRAIL:
-You MUST write 100% ORIGINAL, FRESH content. Do NOT copy, paraphrase, or summarize sentences, structure, or wording from the source transcript below. Use the topic/theme ONLY as creative inspiration.
-
-TOPIC / THEME OF ORIGINAL COMPETITOR VIDEO:
-Title: "${videoData.title}"
-Source Excerpt: "${snippet}"
-
-INSTRUCTIONS:
-Write a brand new, highly engaging YouTube video script (approx 350-500 words) covering this same topic.
-- Create a completely new opening hook, a unique flow/structure, fresh real-world examples, and your own clear explanations.
-- Structure with section titles: [Hook], [Introduction], [Core Key Insights], [Practical Takeaways], and [Call To Action].
-- Write in an engaging, conversational tone suitable for YouTube creators (Hindi/Hinglish or English).
-`;
-
-            const titlesPrompt = `
-Based on the YouTube video concept about "${videoData.title}", generate 7 irresistible, high-CTR YouTube video title options:
-
-Provide ONLY a numbered list (1 to 7) of catchy, click-worthy YouTube titles in Hinglish / English.
-`;
-
-            let newScriptText = '';
-            let titlesText = '';
-
-            try {
-                // Rate-limiting delay before calling free text API
-                await sleep(800);
-                newScriptText = await generateText(scriptPrompt);
-
-                await sleep(500);
-                titlesText = await generateText(titlesPrompt);
-
-            } catch (err) {
-                console.warn(`Pollinations text API skipped video [${i + 1}]: ${err.message}`);
-                job.message = `Skipped script for '${videoData.title}' — text API unavailable (${err.message})`;
-                newScriptText = `[Script generation skipped for "${videoData.title}" — text API temporarily unavailable]`;
-                titlesText = `1. ${videoData.title} (Fresh Take Idea)\n2. Secrets Behind ${videoData.title}`;
-            }
-
-            // Extract first title suggestion as main title
-            const firstTitleMatch = titlesText.match(/1\.\s*(.+)/);
-            const suggestedMainTitle = firstTitleMatch ? firstTitleMatch[1].trim() : videoData.title;
+            const res = await generateScriptAndTitlesForVideo(videoData);
 
             generatedScripts.push({
                 index: i + 1,
                 inspiredByTitle: videoData.title,
                 inspiredByUrl: videoData.url,
-                suggestedMainTitle,
-                titlesText,
-                scriptText: newScriptText
+                suggestedMainTitle: res.suggestedMainTitle,
+                titlesText: res.titlesText,
+                scriptText: res.scriptText
             });
         }
 
