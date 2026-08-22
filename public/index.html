@@ -373,24 +373,29 @@
 
             try {
                 const res = await fetch(`/api/ollama-status?model=${encodeURIComponent(model)}`);
-                const data = await res.json();
-
-                if (data.success) {
-                    iconBox.className = 'w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm';
-                    iconBox.innerHTML = '<i class="fa-solid fa-check"></i>';
-                    statusText.className = 'text-sm font-bold text-emerald-400';
-                    statusText.innerText = `Ollama Active & '${model}' Ready`;
+                const contentType = res.headers.get('content-type') || '';
+                
+                if (contentType.includes('application/json')) {
+                    const data = await res.json();
+                    if (data.success) {
+                        iconBox.className = 'w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm';
+                        iconBox.innerHTML = '<i class="fa-solid fa-check"></i>';
+                        statusText.className = 'text-sm font-bold text-emerald-400';
+                        statusText.innerText = `Ollama Active & '${model}' Ready`;
+                    } else {
+                        iconBox.className = 'w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-sm';
+                        iconBox.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                        statusText.className = 'text-sm font-bold text-red-400';
+                        statusText.innerText = data.message;
+                    }
                 } else {
-                    iconBox.className = 'w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-sm';
-                    iconBox.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                    statusText.className = 'text-sm font-bold text-red-400';
-                    statusText.innerText = data.message;
+                    throw new Error('Server returned HTML instead of JSON. Please restart Node server.');
                 }
             } catch (e) {
                 iconBox.className = 'w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-sm';
                 iconBox.innerHTML = '<i class="fa-solid fa-plug-circle-xmark"></i>';
                 statusText.className = 'text-sm font-bold text-red-400';
-                statusText.innerText = 'Ollama Server Offline (http://localhost:11434)';
+                statusText.innerText = e.message || 'Ollama Server Offline (http://localhost:11434)';
             }
         }
 
@@ -421,7 +426,17 @@
                     body: JSON.stringify({ channelUrl, videoLimit })
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                let data;
+
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const rawText = await response.text();
+                    const cleanText = rawText.replace(/<[^>]*>/g, '').trim();
+                    throw new Error(`Server Error (${response.status}): ${cleanText || 'Please restart server'}`);
+                }
+
                 if (!response.ok || data.error) throw new Error(data.error || 'Failed to start job');
                 listenToProgress(data.jobId);
             } catch (err) {
@@ -445,7 +460,17 @@
                     body: JSON.stringify({ channelUrl, modelName })
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                let data;
+
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const rawText = await response.text();
+                    const cleanText = rawText.replace(/<[^>]*>/g, '').trim();
+                    throw new Error(`Server Error (${response.status}): ${cleanText || 'Please restart server'}`);
+                }
+
                 if (!response.ok || data.error) throw new Error(data.error || 'Failed to start job');
                 listenToProgress(data.jobId);
             } catch (err) {
