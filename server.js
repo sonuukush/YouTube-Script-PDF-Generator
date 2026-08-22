@@ -32,6 +32,45 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+/**
+ * Robust YouTube URL & handle resolver.
+ * Handles @handle, handle without @, full channel URLs, custom URLs, etc.
+ */
+function parseYouTubeChannel(input) {
+    let raw = (input || '').trim();
+    if (!raw) {
+        return { displayHandle: '@channel', sanitizeName: '_channel', targetUrl: '' };
+    }
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+        let cleanUrl = raw.replace(/\/videos\/?$/i, '').replace(/\/$/, '');
+        let match = cleanUrl.match(/youtube\.com\/(@[^\/]+)/i);
+        let displayHandle = match ? match[1] : ('@' + cleanUrl.split('/').pop());
+        let sanitizeName = displayHandle.replace(/[@/\\?%*:|"<>]/g, '_');
+        let targetUrl = cleanUrl.endsWith('/videos') ? cleanUrl : `${cleanUrl}/videos`;
+        return { displayHandle, sanitizeName, targetUrl };
+    }
+
+    let displayHandle = raw.startsWith('@') ? raw : '@' + raw;
+    let sanitizeName = displayHandle.replace(/[@/\\?%*:|"<>]/g, '_');
+    let targetUrl = `https://www.youtube.com/${displayHandle}/videos`;
+    return { displayHandle, sanitizeName, targetUrl };
+}
+
+/**
+ * Safely reads a jsonl file attempting utf16le and utf8 encodings.
+ */
+function readJsonlFileSafely(filePath) {
+    if (!fs.existsSync(filePath)) return '';
+    try {
+        let content = fs.readFileSync(filePath, 'utf16le');
+        if (content.trim().startsWith('{')) return content;
+        return fs.readFileSync(filePath, 'utf8');
+    } catch (e) {
+        return fs.readFileSync(filePath, 'utf8');
+    }
+}
+
 // SSE Endpoint for Live Progress Updates
 app.get('/api/progress/:jobId', (req, res) => {
     const { jobId } = req.params;
@@ -74,21 +113,12 @@ app.post('/api/extract', async (req, res) => {
         return res.status(400).json({ error: 'Channel URL or handle is required' });
     }
 
-    let handle = channelUrl.trim()
-        .replace(/https?:\/\/(www\.)?youtube\.com\//i, '')
-        .replace(/\/videos\/?$/, '')
-        .replace(/\/$/, '');
-
-    if (!handle.startsWith('@')) {
-        handle = '@' + handle;
-    }
-
-    const sanitizeName = handle.replace(/[@/\\?%*:|"<>]/g, '_');
+    const { displayHandle, sanitizeName, targetUrl } = parseYouTubeChannel(channelUrl);
     const jobId = 'job_' + Date.now();
 
     activeJobs.set(jobId, {
         jobId,
-        handle,
+        handle: displayHandle,
         videoLimit,
         status: 'starting',
         message: 'Initializing channel video lookup...',
@@ -102,21 +132,21 @@ app.post('/api/extract', async (req, res) => {
 
     res.json({ jobId, message: 'Processing started' });
 
-    runExtractionTask(jobId, handle, sanitizeName, videoLimit);
+    runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, videoLimit);
 });
 
-async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
+async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, videoLimit) {
     const job = activeJobs.get(jobId);
 
     try {
         job.status = 'fetching_list';
         const limitLabel = videoLimit === 'all' ? 'all' : `latest ${videoLimit}`;
-        job.message = `Fetching ${limitLabel} videos for ${handle}...`;
+        job.message = `Fetching ${limitLabel} videos for ${displayHandle}...`;
         job.progress = 10;
 
         const jsonlFile = path.join(__dirname, `${sanitizeName}_playlist.jsonl`);
         const limitFlag = (videoLimit && videoLimit !== 'all') ? `--playlist-end ${parseInt(videoLimit, 10)}` : '';
-        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j ${limitFlag} "https://www.youtube.com/${handle}/videos" > "${jsonlFile}"`;
+        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j ${limitFlag} "${targetUrl}" > "${jsonlFile}"`;
 
         try {
             execSync(ytdlpCmd, { shell: 'powershell.exe', cwd: __dirname });
@@ -124,13 +154,13 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
             console.log('yt-dlp command warning:', e.message);
         }
 
-        if (!fs.existsSync(jsonlFile)) {
+        const content = readJsonlFileSafely(jsonlFile);
+        if (!content) {
             job.status = 'error';
-            job.message = `Could not find or fetch videos for YouTube handle: ${handle}`;
+            job.message = `Could not find or fetch videos for YouTube handle: ${displayHandle}`;
             return;
         }
 
-        const content = fs.readFileSync(jsonlFile, 'utf16le');
         const lines = content.trim().split('\n').filter(Boolean);
 
         let videoList = [];
@@ -154,7 +184,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
 
         if (videoList.length === 0) {
             job.status = 'error';
-            job.message = `No videos found on channel ${handle}.`;
+            job.message = `No videos found on channel ${displayHandle}.`;
             return;
         }
 
@@ -199,7 +229,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
                 wordCount: scriptText.startsWith('[Script') ? 0 : scriptText.split(/\s+/).length
             });
 
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise(r => setTimeout(r, 40));
         }
 
         // GENERATE PDF E-BOOK
@@ -243,7 +273,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
         <div class="cover-title">${escapeHtml(sanitizeName)}</div>
         <div class="cover-subtitle">YouTube Video Scripts Collection (${scopeText})</div>
         <div class="cover-meta">
-            <strong>Channel Handle:</strong> ${escapeHtml(handle)}<br>
+            <strong>Channel Handle:</strong> ${escapeHtml(displayHandle)}<br>
             <strong>Extraction Scope:</strong> ${scopeText}<br>
             <strong>Total Videos Included:</strong> ${fullData.length}<br>
             <strong>Videos with Scripts:</strong> ${availableScriptsCount}<br>
@@ -308,21 +338,12 @@ app.post('/api/analyze-competitor', async (req, res) => {
         return res.status(400).json({ error: 'Competitor Channel URL or handle is required' });
     }
 
-    let handle = channelUrl.trim()
-        .replace(/https?:\/\/(www\.)?youtube\.com\//i, '')
-        .replace(/\/videos\/?$/, '')
-        .replace(/\/$/, '');
-
-    if (!handle.startsWith('@')) {
-        handle = '@' + handle;
-    }
-
-    const sanitizeName = handle.replace(/[@/\\?%*:|"<>]/g, '_');
+    const { displayHandle, sanitizeName, targetUrl } = parseYouTubeChannel(channelUrl);
     const jobId = 'job_growth_' + Date.now();
 
     activeJobs.set(jobId, {
         jobId,
-        handle,
+        handle: displayHandle,
         modelName,
         status: 'checking_ollama',
         message: `Checking local Ollama status for model '${modelName}'...`,
@@ -333,10 +354,10 @@ app.post('/api/analyze-competitor', async (req, res) => {
 
     res.json({ jobId, message: 'Competitor Research task started' });
 
-    runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName);
+    runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl, modelName);
 });
 
-async function runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName) {
+async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl, modelName) {
     const job = activeJobs.get(jobId);
 
     try {
@@ -354,11 +375,11 @@ async function runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName)
 
         // STEP 1: FETCH ALL COMPETITOR VIDEOS METADATA
         job.status = 'fetching_channel_videos';
-        job.message = `Fetching all videos & engagement metadata for competitor ${handle}...`;
+        job.message = `Fetching all videos & engagement metadata for competitor ${displayHandle}...`;
         job.progress = 10;
 
         const jsonlFile = path.join(__dirname, `${sanitizeName}_competitor_playlist.jsonl`);
-        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j "https://www.youtube.com/${handle}/videos" > "${jsonlFile}"`;
+        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j "${targetUrl}" > "${jsonlFile}"`;
 
         try {
             execSync(ytdlpCmd, { shell: 'powershell.exe', cwd: __dirname });
@@ -366,13 +387,13 @@ async function runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName)
             console.log('yt-dlp competitor warning:', e.message);
         }
 
-        if (!fs.existsSync(jsonlFile)) {
+        const content = readJsonlFileSafely(jsonlFile);
+        if (!content) {
             job.status = 'error';
-            job.message = `Could not find or fetch video metadata for competitor handle: ${handle}`;
+            job.message = `Could not find or fetch video metadata for competitor handle: ${displayHandle}`;
             return;
         }
 
-        const content = fs.readFileSync(jsonlFile, 'utf16le');
         const lines = content.trim().split('\n').filter(Boolean);
 
         let rawVideos = [];
@@ -393,7 +414,7 @@ async function runCompetitorAnalysisTask(jobId, handle, sanitizeName, modelName)
 
         if (rawVideos.length === 0) {
             job.status = 'error';
-            job.message = `No video metadata found for competitor ${handle}.`;
+            job.message = `No video metadata found for competitor ${displayHandle}.`;
             return;
         }
 
@@ -537,7 +558,7 @@ Provide ONLY a numbered list (1 to 7) of catchy, click-worthy YouTube titles in 
         const pdfPath = path.join(__dirname, pdfFileName);
 
         generateCompetitorPdfReport({
-            handle,
+            handle: displayHandle,
             modelName,
             topVideos,
             hooks,
