@@ -42,6 +42,11 @@ function parseYouTubeChannel(input) {
         return { displayHandle: '@channel', sanitizeName: '_channel', targetUrl: '' };
     }
 
+    // Clean up accidental filename artifacts (e.g. if user pastes _Drk-Minds_competitor_playlist.jsonl)
+    raw = raw.replace(/(_competitor_playlist|_playlist)?\.jsonl$/i, '')
+             .replace(/_scripts\.(html|pdf)$/i, '')
+             .replace(/_competitor_growth_report\.(html|pdf)$/i, '');
+
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
         let cleanUrl = raw.replace(/\/videos\/?$/i, '').replace(/\/$/, '');
         let match = cleanUrl.match(/youtube\.com\/(@[^\/]+)/i);
@@ -51,7 +56,9 @@ function parseYouTubeChannel(input) {
         return { displayHandle, sanitizeName, targetUrl };
     }
 
-    let displayHandle = raw.startsWith('@') ? raw : '@' + raw;
+    // Strip leading underscores if copied from a filename like _Drk-Minds
+    let cleanHandle = raw.replace(/^_+/, '');
+    let displayHandle = cleanHandle.startsWith('@') ? cleanHandle : '@' + cleanHandle;
     let sanitizeName = displayHandle.replace(/[@/\\?%*:|"<>]/g, '_');
     let targetUrl = `https://www.youtube.com/${displayHandle}/videos`;
     return { displayHandle, sanitizeName, targetUrl };
