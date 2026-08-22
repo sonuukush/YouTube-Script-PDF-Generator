@@ -325,7 +325,7 @@ async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, 
 
 // --- NEW FEATURE: CHANNEL GROWTH RESEARCH MODE (POLLINATIONS.AI CLOUD TEXT API) ---
 app.post('/api/analyze-competitor', async (req, res) => {
-    const { channelUrl } = req.body;
+    const { channelUrl, competitorLimit = '5' } = req.body;
 
     if (!channelUrl) {
         return res.status(400).json({ error: 'Competitor Channel URL or handle is required' });
@@ -337,6 +337,7 @@ app.post('/api/analyze-competitor', async (req, res) => {
     activeJobs.set(jobId, {
         jobId,
         handle: displayHandle,
+        competitorLimit,
         status: 'starting',
         message: `Initializing competitor research for ${displayHandle}...`,
         progress: 5,
@@ -346,10 +347,10 @@ app.post('/api/analyze-competitor', async (req, res) => {
 
     res.json({ jobId, message: 'Competitor Research task started' });
 
-    runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl);
+    runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl, competitorLimit);
 });
 
-async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl) {
+async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, targetUrl, competitorLimit) {
     const job = activeJobs.get(jobId);
 
     try {
@@ -403,9 +404,10 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
         job.message = `Analyzing ${rawVideos.length} videos. Computing retention scores...`;
         job.progress = 20;
 
-        const topVideos = rankVideosByRetentionScore(rawVideos);
+        const limitNum = parseInt(competitorLimit, 10) || 5;
+        const topVideos = rankVideosByRetentionScore(rawVideos, limitNum);
         
-        // STEP 3: EXTRACT TRANSCRIPTS & HOOKS FOR TOP 20 VIDEOS
+        // STEP 3: EXTRACT TRANSCRIPTS & HOOKS FOR TOP VIDEOS
         job.status = 'extracting_hooks';
         job.message = `Extracting transcripts and opening hooks for Top ${topVideos.length} videos...`;
         job.progress = 30;

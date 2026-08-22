@@ -222,13 +222,37 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-200 mb-2">
+                            <i class="fa-solid fa-filter text-blue-500 mr-2"></i>How Many Top Videos to Analyze & Generate Scripts For?
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="competitorLimit" value="2" class="peer hidden">
+                                <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500/20 peer-checked:text-white transition-all">⚡ Top 2 Videos</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="competitorLimit" value="5" checked class="peer hidden">
+                                <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500/20 peer-checked:text-white transition-all">🚀 Top 5 Videos (Recommended)</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="competitorLimit" value="10" class="peer hidden">
+                                <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500/20 peer-checked:text-white transition-all">⭐ Top 10 Videos</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="competitorLimit" value="20" class="peer hidden">
+                                <div class="p-3 text-center rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500/20 peer-checked:text-white transition-all">🎯 Top 20 Videos</div>
+                            </label>
+                        </div>
+                    </div>
+
                     <button 
                         type="submit" 
                         id="submitGrowthBtn"
                         class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all flex items-center justify-center gap-3 text-base cursor-pointer"
                     >
                         <i class="fa-solid fa-rocket text-xl"></i>
-                        <span>Analyze Competitor & Generate 20 New Scripts</span>
+                        <span>Analyze Competitor & Generate New Scripts</span>
                     </button>
                 </form>
             </div>
@@ -377,14 +401,16 @@
             const channelUrl = document.getElementById('competitorUrl').value.trim();
             if (!channelUrl) return;
 
+            const competitorLimit = document.querySelector('input[name="competitorLimit"]:checked').value;
+
             startTaskUI();
-            addConsoleLog(`Starting Competitor Research for ${channelUrl} via Pollinations.ai Text API...`);
+            addConsoleLog(`Starting Competitor Research for ${channelUrl} (Top ${competitorLimit} Videos)...`);
 
             try {
                 const response = await fetch('/api/analyze-competitor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ channelUrl })
+                    body: JSON.stringify({ channelUrl, competitorLimit })
                 });
 
                 const contentType = response.headers.get('content-type') || '';
