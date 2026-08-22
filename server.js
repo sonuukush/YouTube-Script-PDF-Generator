@@ -5,10 +5,6 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
-const { breakScriptIntoScenes } = require('./lib/scene_breakdown');
-const { generateAllSceneImages } = require('./lib/image_generator');
-const { renderKineticVideo } = require('./lib/video_renderer');
-
 const app = express();
 const PORT = 3000;
 
@@ -56,12 +52,7 @@ app.get('/api/progress/:jobId', (req, res) => {
 
 // Start Channel Extraction & Processing API
 app.post('/api/extract', async (req, res) => {
-    const { 
-        channelUrl, 
-        videoLimit = '50',
-        outputMode = 'pdf', // 'pdf', 'video', 'both'
-        aspectRatio = '16:9' // '16:9', '9:16'
-    } = req.body;
+    const { channelUrl, videoLimit = '50' } = req.body;
 
     if (!channelUrl) {
         return res.status(400).json({ error: 'Channel URL or handle is required' });
@@ -83,8 +74,6 @@ app.post('/api/extract', async (req, res) => {
         jobId,
         handle,
         videoLimit,
-        outputMode,
-        aspectRatio,
         status: 'starting',
         message: 'Initializing channel video lookup...',
         progress: 5,
@@ -92,29 +81,24 @@ app.post('/api/extract', async (req, res) => {
         processedCount: 0,
         currentVideoTitle: '',
         pdfUrl: '',
-        videoUrl: '',
-        videoList: [],
         fileName: ''
     });
 
     res.json({ jobId, message: 'Processing started' });
 
-    runExtractionTask(jobId, handle, sanitizeName, videoLimit, outputMode, aspectRatio);
+    runExtractionTask(jobId, handle, sanitizeName, videoLimit);
 });
 
-async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, outputMode, aspectRatio) {
+async function runExtractionTask(jobId, handle, sanitizeName, videoLimit) {
     const job = activeJobs.get(jobId);
-    const jobTempDir = path.join(__dirname, 'temp_jobs', jobId);
 
     try {
-        fs.mkdirSync(jobTempDir, { recursive: true });
-
         job.status = 'fetching_list';
         const limitLabel = videoLimit === 'all' ? 'all' : `latest ${videoLimit}`;
         job.message = `Fetching ${limitLabel} videos for ${handle}...`;
         job.progress = 10;
 
-        const jsonlFile = path.join(jobTempDir, `${sanitizeName}_playlist.jsonl`);
+        const jsonlFile = path.join(__dirname, `${sanitizeName}_playlist.jsonl`);
         const limitFlag = (videoLimit && videoLimit !== 'all') ? `--playlist-end ${parseInt(videoLimit, 10)}` : '';
         const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j ${limitFlag} "https://www.youtube.com/${handle}/videos" > "${jsonlFile}"`;
 
@@ -170,7 +154,7 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
             job.processedCount = i + 1;
             job.currentVideoTitle = item.title;
 
-            job.progress = Math.round(15 + ((i + 1) / videoList.length) * 20);
+            job.progress = Math.round(15 + ((i + 1) / videoList.length) * 60);
             job.message = `Extracting Script [${i + 1}/${videoList.length}]: "${item.title}"`;
 
             let scriptText = '';
@@ -199,19 +183,18 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
                 wordCount: scriptText.startsWith('[Script') ? 0 : scriptText.split(/\s+/).length
             });
 
-            await new Promise(r => setTimeout(r, 60));
+            await new Promise(r => setTimeout(r, 50));
         }
 
-        // --- PIPELINE 1: GENERATE PDF E-BOOK ---
-        if (outputMode === 'pdf' || outputMode === 'both') {
-            job.status = 'generating_pdf';
-            job.message = 'Generating HTML E-Book and rendering PDF document...';
-            job.progress = outputMode === 'both' ? 40 : 85;
+        // GENERATE PDF E-BOOK
+        job.status = 'generating_pdf';
+        job.message = 'Generating HTML E-Book and rendering PDF document...';
+        job.progress = 85;
 
-            const availableScriptsCount = fullData.filter(d => !d.script.startsWith('[Script')).length;
-            const scopeText = videoLimit === 'all' ? 'All Videos' : `Latest ${videoList.length} Videos`;
+        const availableScriptsCount = fullData.filter(d => !d.script.startsWith('[Script')).length;
+        const scopeText = videoLimit === 'all' ? 'All Videos' : `Latest ${videoList.length} Videos`;
 
-            let htmlContent = `<!DOCTYPE html>
+        let htmlContent = `<!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
@@ -276,89 +259,23 @@ async function runExtractionTask(jobId, handle, sanitizeName, videoLimit, output
 </body>
 </html>`;
 
-            const suffix = videoLimit === 'all' ? '_All' : `_Top${videoLimit}`;
-            const htmlFileName = `${sanitizeName}${suffix}_scripts.html`;
-            const pdfFileName = `${sanitizeName}${suffix}_scripts.pdf`;
-            const htmlPath = path.join(__dirname, htmlFileName);
-            const pdfPath = path.join(__dirname, pdfFileName);
+        const suffix = videoLimit === 'all' ? '_All' : `_Top${videoLimit}`;
+        const htmlFileName = `${sanitizeName}${suffix}_scripts.html`;
+        const pdfFileName = `${sanitizeName}${suffix}_scripts.pdf`;
+        const htmlPath = path.join(__dirname, htmlFileName);
+        const pdfPath = path.join(__dirname, pdfFileName);
 
-            fs.writeFileSync(htmlPath, htmlContent, 'utf8');
+        fs.writeFileSync(htmlPath, htmlContent, 'utf8');
 
-            const cmd = `"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --headless --disable-gpu --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
-            execSync(cmd);
+        const cmd = `"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --headless --disable-gpu --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
+        execSync(cmd);
 
-            job.fileName = pdfFileName;
-            job.pdfUrl = `/api/download/${pdfFileName}`;
-        }
-
-        // --- PIPELINE 2: GENERATE INDIVIDUAL KINETIC TYPOGRAPHY MP4 VIDEOS FOR EACH VIDEO ---
-        if (outputMode === 'video' || outputMode === 'both') {
-            job.status = 'generating_kinetic_videos';
-            const validVideos = fullData.filter(d => d.wordCount > 0);
-            const outputDir = path.join(__dirname, 'output_videos');
-            
-            if (!fs.existsSync(outputDir)) {
-                fs.mkdirSync(outputDir, { recursive: true });
-            }
-
-            const generatedVideos = [];
-            const cleanRatioName = aspectRatio.replace(':', 'x');
-
-            for (let vIdx = 0; vIdx < validVideos.length; vIdx++) {
-                const video = validVideos[vIdx];
-                const startPct = outputMode === 'both' ? 45 : 35;
-                job.progress = Math.round(startPct + ((vIdx + 1) / validVideos.length) * 60);
-                job.message = `Rendering Kinetic Video [${vIdx + 1}/${validVideos.length}]: "${video.title}"`;
-
-                const scenes = breakScriptIntoScenes(video.script);
-                if (scenes.length === 0) continue;
-
-                // Cap scenes per video to 15 key phrase chunks for optimum video length
-                const videoScenes = scenes.slice(0, 15);
-
-                const subTempDir = path.join(jobTempDir, `v_${vIdx + 1}`);
-                const imagePaths = await generateAllSceneImages(
-                    videoScenes,
-                    aspectRatio,
-                    subTempDir,
-                    null
-                );
-
-                const safeVideoTitle = video.title.replace(/[@/\\?%*:|"<>]/g, '_').substring(0, 30);
-                const videoFileName = `${sanitizeName}_v${vIdx + 1}_${safeVideoTitle}_${cleanRatioName}.mp4`;
-                const videoFilePath = path.join(outputDir, videoFileName);
-
-                await renderKineticVideo(
-                    videoScenes,
-                    imagePaths,
-                    aspectRatio,
-                    videoFilePath,
-                    subTempDir,
-                    null
-                );
-
-                generatedVideos.push({
-                    index: vIdx + 1,
-                    title: video.title,
-                    url: video.url,
-                    fileName: videoFileName,
-                    downloadUrl: `/api/download-video/${videoFileName}`
-                });
-            }
-
-            job.videoList = generatedVideos;
-            if (generatedVideos.length > 0) {
-                job.videoUrl = generatedVideos[0].downloadUrl; // Top video default
-            }
-        }
+        job.fileName = pdfFileName;
+        job.pdfUrl = `/api/download/${pdfFileName}`;
 
         job.status = 'completed';
         job.progress = 100;
-        job.message = 'Processing completed successfully!';
-
-        if (fs.existsSync(jobTempDir)) {
-            try { fs.rmSync(jobTempDir, { recursive: true, force: true }); } catch (e) {}
-        }
+        job.message = 'Processing completed successfully! PDF is ready.';
 
     } catch (err) {
         console.error('Task error:', err);
@@ -379,21 +296,9 @@ app.get('/api/download/:filename', (req, res) => {
     }
 });
 
-// Download Video MP4 API
-app.get('/api/download-video/:filename', (req, res) => {
-    const filename = req.params.filename;
-    const filePath = path.join(__dirname, 'output_videos', filename);
-
-    if (fs.existsSync(filePath)) {
-        res.download(filePath, filename);
-    } else {
-        res.status(404).json({ error: 'Video file not found' });
-    }
-});
-
 app.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🚀 YouTube Script PDF & Kinetic Video Web App running at:`);
+    console.log(`🚀 YouTube Script PDF Generator running at:`);
     console.log(`👉 http://localhost:${PORT}`);
     console.log(`====================================================`);
 });
