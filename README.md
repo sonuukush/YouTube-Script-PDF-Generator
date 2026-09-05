@@ -1,10 +1,13 @@
 # 🚀 YouTube Script PDF & Channel Growth Research Studio
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-https%3A%2F%2Fyoutube--script--pdf--generator.onrender.com-brightgreen?style=for-the-badge&logo=render)](https://youtube-script-pdf-generator.onrender.com/)
 ![Node.js](https://img.shields.io/badge/Node.js-22.x-green.svg?style=flat-square&logo=node.js)
 ![Express](https://img.shields.io/badge/Express-5.x-blue.svg?style=flat-square&logo=express)
 ![Pollinations.ai](https://img.shields.io/badge/AI_Text-Pollinations.ai-38B2AC.svg?style=flat-square)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC.svg?style=flat-square&logo=tailwind-css)
 ![License](https://img.shields.io/badge/License-MIT-orange.svg?style=flat-square)
+
+> 🌐 **Live Web Demo:** [https://youtube-script-pdf-generator.onrender.com/](https://youtube-script-pdf-generator.onrender.com/)
 
 > **Full-Stack Web Application for YouTube Channel Script PDF Extraction & Competitor Growth Research using Pollinations.ai Cloud Text API.**
 
@@ -96,6 +99,13 @@ npm start
 ### 2. Open in Browser
 
 👉 **`http://localhost:3000`**
+
+---
+
+## 🌐 Live Web Demo
+
+Try the application live without local installation:  
+👉 **[https://youtube-script-pdf-generator.onrender.com/](https://youtube-script-pdf-generator.onrender.com/)**
 
 ---
 
