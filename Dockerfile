@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y \
     fonts-noto-core \
     fonts-noto-extra \
     fonts-noto-ui-core \
-    fonts-devg \
+    fonts-deva \
+    fonts-gargi \
+    fonts-indic \
     && rm -rf /var/lib/apt-get/lists/*
 
 ENV CHROME_BIN=/usr/bin/chromium
