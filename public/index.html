@@ -304,7 +304,7 @@
                 <a 
                     id="downloadPdfBtn" 
                     href="#" 
-                    download 
+                    target="_blank" 
                     class="inline-flex bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-emerald-600/30 transition-all items-center justify-center gap-2 text-base"
                 >
                     <i class="fa-solid fa-file-pdf text-xl"></i>
@@ -480,6 +480,9 @@
             const pdfBtn = document.getElementById('downloadPdfBtn');
             if (job.pdfUrl) {
                 pdfBtn.href = job.pdfUrl;
+                if (job.fileName) {
+                    pdfBtn.setAttribute('download', job.fileName);
+                }
             }
 
             document.getElementById('successMessage').innerText = `Successfully processed ${job.handle}! Download your generated PDF report below.`;

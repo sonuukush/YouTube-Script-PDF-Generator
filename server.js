@@ -12,7 +12,7 @@ const {
     analyzeLengthVsViewsPattern, 
     extractTrendingKeywords 
 } = require('./lib/competitor_analyzer');
-const { generateCompetitorPdfReport } = require('./lib/competitor_report_pdf');
+const { generateCompetitorPdfReport, renderPdfFromHtml } = require('./lib/competitor_report_pdf');
 
 const app = express();
 const PORT = 3000;
@@ -386,19 +386,7 @@ async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, 
         const pdfPath = path.join(__dirname, pdfFileName);
 
         fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-
-        function getBrowserExecutable() {
-            if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
-            const edgeWin = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-            const chromeWin = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-            if (fs.existsSync(edgeWin)) return `"${edgeWin}"`;
-            if (fs.existsSync(chromeWin)) return `"${chromeWin}"`;
-            return 'chromium';
-        }
-
-        const browserExe = getBrowserExecutable();
-        const cmd = `${browserExe} --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
-        execSync(cmd);
+        renderPdfFromHtml(htmlPath, pdfPath);
 
         job.fileName = pdfFileName;
         job.pdfUrl = `/api/download/${pdfFileName}`;
@@ -665,15 +653,35 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
     }
 }
 
-// Download PDF API
+// Download PDF / HTML API Route
 app.get('/api/download/:filename', (req, res) => {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, filename);
+    let filePath = path.join(__dirname, filename);
+
+    // If requested .pdf is missing on server disk, but corresponding .html file exists, attempt on-the-fly PDF render!
+    if (!fs.existsSync(filePath) && filename.endsWith('.pdf')) {
+        const htmlFile = filePath.replace(/\.pdf$/i, '.html');
+        if (fs.existsSync(htmlFile)) {
+            console.log(`PDF missing on server disk, rendering on-the-fly from ${htmlFile}...`);
+            try {
+                renderPdfFromHtml(htmlFile, filePath);
+            } catch (e) {
+                console.error('On-the-fly PDF render failed:', e.message);
+            }
+        }
+    }
 
     if (fs.existsSync(filePath)) {
-        res.download(filePath, filename);
+        const ext = path.extname(filename).toLowerCase();
+        if (ext === '.pdf') {
+            res.setHeader('Content-Type', 'application/pdf');
+        } else if (ext === '.html') {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        }
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.sendFile(filePath);
     } else {
-        res.status(404).json({ error: 'File not found' });
+        res.status(404).type('text/plain').send(`File ${filename} not found on server.`);
     }
 });
 
