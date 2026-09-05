@@ -32,6 +32,22 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+function getYtDlpExe() {
+    const localExe = path.join(__dirname, 'yt-dlp.exe');
+    if (process.platform === 'win32' && fs.existsSync(localExe)) {
+        return `.\\yt-dlp.exe`;
+    }
+    return 'yt-dlp';
+}
+
+function execYtDlp(cmdStr) {
+    if (process.platform === 'win32') {
+        return execSync(cmdStr, { shell: 'powershell.exe', cwd: __dirname, encoding: 'utf8' });
+    } else {
+        return execSync(cmdStr, { shell: '/bin/sh', cwd: __dirname, encoding: 'utf8' });
+    }
+}
+
 /**
  * Robust YouTube URL & handle resolver.
  * Handles @handle, handle without @, full channel URLs, custom URLs, etc.
@@ -146,10 +162,11 @@ async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, 
 
         const jsonlFile = path.join(__dirname, `${sanitizeName}_playlist.jsonl`);
         const limitFlag = (videoLimit && videoLimit !== 'all') ? `--playlist-end ${parseInt(videoLimit, 10)}` : '';
-        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j ${limitFlag} "${targetUrl}" > "${jsonlFile}"`;
+        const ytdlpBin = getYtDlpExe();
+        const ytdlpCmd = `${ytdlpBin} --flat-playlist -j ${limitFlag} "${targetUrl}" > "${jsonlFile}"`;
 
         try {
-            execSync(ytdlpCmd, { shell: 'powershell.exe', cwd: __dirname });
+            execYtDlp(ytdlpCmd);
         } catch (e) {
             console.log('yt-dlp command warning:', e.message);
         }
@@ -381,10 +398,11 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
             try { fs.unlinkSync(jsonlFile); } catch (e) {}
         }
 
-        const ytdlpCmd = `.\\yt-dlp.exe --flat-playlist -j "${targetUrl}" > "${jsonlFile}"`;
+        const ytdlpBin = getYtDlpExe();
+        const ytdlpCmd = `${ytdlpBin} --flat-playlist -j "${targetUrl}" > "${jsonlFile}"`;
 
         try {
-            execSync(ytdlpCmd, { shell: 'powershell.exe', cwd: __dirname });
+            execYtDlp(ytdlpCmd);
         } catch (e) {
             console.log('yt-dlp competitor warning:', e.message);
         }
@@ -433,8 +451,9 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
         for (let i = 0; i < candidateVideos.length; i++) {
             const item = candidateVideos[i];
             try {
-                const dumpCmd = `.\\yt-dlp.exe --dump-json "https://www.youtube.com/watch?v=${item.id}"`;
-                const dumpJsonStr = execSync(dumpCmd, { shell: 'powershell.exe', cwd: __dirname, encoding: 'utf8' });
+                const ytdlpBin = getYtDlpExe();
+                const dumpCmd = `${ytdlpBin} --dump-json "https://www.youtube.com/watch?v=${item.id}"`;
+                const dumpJsonStr = execYtDlp(dumpCmd);
                 if (dumpJsonStr) {
                     const detail = JSON.parse(dumpJsonStr);
                     if (detail.like_count !== undefined && detail.like_count !== null) {
