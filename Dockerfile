@@ -1,9 +1,10 @@
 # Dockerfile for Render.com Free Web Service Deployment
 FROM node:20-slim
 
-# Install yt-dlp, chromium, and Devanagari Hindi font support
+# Install dependencies, curl, python3, chromium, and Devanagari Hindi font support
 RUN apt-get update && apt-get install -y \
-    yt-dlp \
+    curl \
+    python3 \
     chromium \
     fonts-noto-core \
     fonts-noto-extra \
@@ -12,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     fonts-gargi \
     fonts-indic \
     && rm -rf /var/lib/apt-get/lists/*
+
+# Install LATEST yt-dlp binary directly from GitHub releases
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp
 
 ENV CHROME_BIN=/usr/bin/chromium
 ENV PORT=3000
