@@ -10,6 +10,7 @@ channel_scripts/
 *.pdf
 *.mp4
 *_scripts.html
+*_Competitor_Growth_Report.html
 channel.html
 channel_utf8.html
 *.jsonl

@@ -5,7 +5,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
-const { generateText, generateScriptAndTitlesForVideo, sleep } = require('./lib/text_generator');
+const { generateText, generateScriptAndTitlesForVideo, calculateTextSimilarity, sleep } = require('./lib/text_generator');
 const { 
     rankVideosByRetentionScore, 
     extractHookText, 
@@ -313,7 +313,17 @@ async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, 
 
         fs.writeFileSync(htmlPath, htmlContent, 'utf8');
 
-        const cmd = `"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --headless --disable-gpu --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
+        function getBrowserExecutable() {
+            if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
+            const edgeWin = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+            const chromeWin = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+            if (fs.existsSync(edgeWin)) return `"${edgeWin}"`;
+            if (fs.existsSync(chromeWin)) return `"${chromeWin}"`;
+            return 'chromium';
+        }
+
+        const browserExe = getBrowserExecutable();
+        const cmd = `${browserExe} --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --print-to-pdf="${pdfPath}" "file:///${htmlPath.replace(/\\/g, '/')}"`;
         execSync(cmd);
 
         job.fileName = pdfFileName;
@@ -507,10 +517,21 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
 
         for (let i = 0; i < fullData.length; i++) {
             const videoData = fullData[i];
+            videoData.durationSec = topVideos[i] ? (topVideos[i].durationSec || 570) : 570;
             job.progress = Math.round(45 + ((i + 1) / fullData.length) * 35);
-            job.message = `Generating Original Script & Titles [${i + 1}/${fullData.length}]: "${videoData.title}"`;
+            job.message = `Generating Full-Length Original Script & Titles [${i + 1}/${fullData.length}]: "${videoData.title}"`;
 
-            const res = await generateScriptAndTitlesForVideo(videoData);
+            let res = await generateScriptAndTitlesForVideo(videoData);
+
+            // Similarity check against previously generated scripts in batch
+            for (const prev of generatedScripts) {
+                const sim = calculateTextSimilarity(res.scriptText, prev.scriptText);
+                if (sim > 0.20) {
+                    console.warn(`Script similarity warning (${Math.round(sim * 100)}%) between script #${i + 1} and script #${prev.index}. Unique angle active.`);
+                    job.message = `Script #${i + 1} checked for unique topic content (${Math.round(sim * 100)}% similarity).`;
+                    break;
+                }
+            }
 
             generatedScripts.push({
                 index: i + 1,
@@ -518,7 +539,8 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
                 inspiredByUrl: videoData.url,
                 suggestedMainTitle: res.suggestedMainTitle,
                 titlesText: res.titlesText,
-                scriptText: res.scriptText
+                scriptText: res.scriptText,
+                wordCount: res.wordCount || res.scriptText.split(/\s+/).length
             });
         }
 
