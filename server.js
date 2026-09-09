@@ -39,16 +39,24 @@ function getTranscriptViaYtDlp(videoId) {
         const outputPrefix = path.join(tmpDir, `ytsubs_${videoId}_${Date.now()}`);
         const ytDlpCmd = getYtDlpExe();
 
-        const cmd = `${ytDlpCmd} --write-sub --write-auto-sub --skip-download --sub-format vtt --output "${outputPrefix}" "https://www.youtube.com/watch?v=${videoId}"`;
-        
+        // 1. Try native Hindi subtitle tracks first
+        let cmd = `${ytDlpCmd} --write-sub --write-auto-sub --skip-download --sub-format vtt --sub-lang "hi,hi-orig,hi-IN" --output "${outputPrefix}" "https://www.youtube.com/watch?v=${videoId}"`;
         try {
-            execSync(cmd, { cwd: __dirname, timeout: 20000, stdio: 'ignore' });
-        } catch (e) {
-            // yt-dlp may exit with non-zero code if one requested lang is missing, but requested valid lang file is created
+            execSync(cmd, { cwd: __dirname, timeout: 15000, stdio: 'ignore' });
+        } catch (e) {}
+
+        let baseName = path.basename(outputPrefix);
+        let files = fs.readdirSync(tmpDir).filter(f => f.startsWith(baseName) && f.endsWith('.vtt'));
+
+        // 2. If Hindi not found, try native English subtitle tracks
+        if (files.length === 0) {
+            cmd = `${ytDlpCmd} --write-sub --write-auto-sub --skip-download --sub-format vtt --sub-lang "en,en-orig,en-US" --output "${outputPrefix}" "https://www.youtube.com/watch?v=${videoId}"`;
+            try {
+                execSync(cmd, { cwd: __dirname, timeout: 15000, stdio: 'ignore' });
+            } catch (e) {}
+            files = fs.readdirSync(tmpDir).filter(f => f.startsWith(baseName) && f.endsWith('.vtt'));
         }
 
-        const baseName = path.basename(outputPrefix);
-        const files = fs.readdirSync(tmpDir).filter(f => f.startsWith(baseName) && f.endsWith('.vtt'));
         if (files.length > 0) {
             const preferredFile = files.find(f => f.includes('.hi.')) || files.find(f => f.includes('.hi-orig.')) || files.find(f => f.includes('.en.')) || files[0];
             const vttPath = path.join(tmpDir, preferredFile);
@@ -163,16 +171,17 @@ async function getRobustTranscript(videoId) {
     return '[Script / Captions Not Available for this video]';
 }
 
-
-
-
 function getYtDlpExe() {
     const localExe = path.join(__dirname, 'yt-dlp.exe');
     if (process.platform === 'win32' && fs.existsSync(localExe)) {
         return `.\\yt-dlp.exe`;
     }
+    if (fs.existsSync('/usr/local/bin/yt-dlp')) {
+        return '/usr/local/bin/yt-dlp';
+    }
     return 'yt-dlp';
 }
+
 
 function execYtDlp(cmdStr) {
     if (process.platform === 'win32') {
