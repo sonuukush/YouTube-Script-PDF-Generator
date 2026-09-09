@@ -39,7 +39,7 @@ function getTranscriptViaYtDlp(videoId) {
         const outputPrefix = path.join(tmpDir, `ytsubs_${videoId}_${Date.now()}`);
         const ytDlpCmd = getYtDlpExe();
 
-        const cmd = `${ytDlpCmd} --write-sub --write-auto-sub --skip-download --sub-format vtt --sub-lang hi,en,hi-Latn,en-US --output "${outputPrefix}" "https://www.youtube.com/watch?v=${videoId}"`;
+        const cmd = `${ytDlpCmd} --write-sub --write-auto-sub --skip-download --sub-format vtt --output "${outputPrefix}" "https://www.youtube.com/watch?v=${videoId}"`;
         
         try {
             execSync(cmd, { cwd: __dirname, timeout: 20000, stdio: 'ignore' });
@@ -50,7 +50,7 @@ function getTranscriptViaYtDlp(videoId) {
         const baseName = path.basename(outputPrefix);
         const files = fs.readdirSync(tmpDir).filter(f => f.startsWith(baseName) && f.endsWith('.vtt'));
         if (files.length > 0) {
-            const preferredFile = files.find(f => f.includes('.hi.')) || files.find(f => f.includes('.en.')) || files[0];
+            const preferredFile = files.find(f => f.includes('.hi.')) || files.find(f => f.includes('.hi-orig.')) || files.find(f => f.includes('.en.')) || files[0];
             const vttPath = path.join(tmpDir, preferredFile);
             const vttContent = fs.readFileSync(vttPath, 'utf8');
 
@@ -85,32 +85,32 @@ function getTranscriptViaYtDlp(videoId) {
 }
 
 async function getRobustTranscript(videoId) {
-    // 1. Try YoutubeTranscript with specific languages in order
-    const languages = ['hi', 'en', 'hi-Latn', 'en-US'];
+    // 1. Try YoutubeTranscript default track (most reliable for primary caption)
+    try {
+        const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+        if (transcript && transcript.length > 0) {
+            const text = transcript.map(t => t.text).join(' ').trim();
+            if (text.length > 0) {
+                return text;
+            }
+        }
+    } catch (e) {}
+
+    // 2. Try specific language tracks ('hi', 'en', 'hi-orig', 'hi-Latn', 'en-US')
+    const languages = ['hi', 'en', 'hi-orig', 'hi-Latn', 'en-US'];
     for (const lang of languages) {
         try {
             const transcript = await YoutubeTranscript.fetchTranscript(videoId, { lang });
             if (transcript && transcript.length > 0) {
-                return transcript.map(t => t.text).join(' ');
+                const text = transcript.map(t => t.text).join(' ').trim();
+                if (text.length > 0) {
+                    return text;
+                }
             }
         } catch (e) {}
     }
 
-    // 2. Try YoutubeTranscript without language parameter (default track)
-    try {
-        const defaultTranscript = await YoutubeTranscript.fetchTranscript(videoId);
-        if (defaultTranscript && defaultTranscript.length > 0) {
-            return defaultTranscript.map(t => t.text).join(' ');
-        }
-    } catch (e) {}
-
-    // 3. Try yt-dlp (Primary fallback for Cloud/Datacenter IPs like Render)
-    const ytDlpText = getTranscriptViaYtDlp(videoId);
-    if (ytDlpText) {
-        return ytDlpText;
-    }
-
-    // 4. Fallback: Parse captionTracks from YouTube HTML player response
+    // 3. Fallback: Parse captionTracks from YouTube HTML player response
     try {
         const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
         const res = await fetch(watchUrl, {
@@ -154,8 +154,15 @@ async function getRobustTranscript(videoId) {
         console.log('CaptionTracks scraper error:', e.message);
     }
 
+    // 4. Fallback to yt-dlp binary (Handles cloud/datacenter IP blocks seamlessly)
+    const ytDlpText = getTranscriptViaYtDlp(videoId);
+    if (ytDlpText) {
+        return ytDlpText;
+    }
+
     return '[Script / Captions Not Available for this video]';
 }
+
 
 
 
