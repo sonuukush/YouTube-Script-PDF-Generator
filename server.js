@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { execSync } = require('child_process');
 const { YoutubeTranscript } = require('youtube-transcript');
 
@@ -32,6 +33,57 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+function getTranscriptViaYtDlp(videoId) {
+    try {
+        const tmpDir = os.tmpdir();
+        const outputPrefix = path.join(tmpDir, `ytsubs_${videoId}_${Date.now()}`);
+        const ytDlpCmd = getYtDlpExe();
+
+        const cmd = `${ytDlpCmd} --write-sub --write-auto-sub --skip-download --sub-format vtt --sub-lang hi,en,hi-Latn,en-US --output "${outputPrefix}" "https://www.youtube.com/watch?v=${videoId}"`;
+        
+        try {
+            execSync(cmd, { cwd: __dirname, timeout: 20000, stdio: 'ignore' });
+        } catch (e) {
+            // yt-dlp may exit with non-zero code if one requested lang is missing, but requested valid lang file is created
+        }
+
+        const baseName = path.basename(outputPrefix);
+        const files = fs.readdirSync(tmpDir).filter(f => f.startsWith(baseName) && f.endsWith('.vtt'));
+        if (files.length > 0) {
+            const preferredFile = files.find(f => f.includes('.hi.')) || files.find(f => f.includes('.en.')) || files[0];
+            const vttPath = path.join(tmpDir, preferredFile);
+            const vttContent = fs.readFileSync(vttPath, 'utf8');
+
+            files.forEach(f => { try { fs.unlinkSync(path.join(tmpDir, f)); } catch(e){} });
+
+            const lines = vttContent.split('\n');
+            const textParts = [];
+            let lastLine = '';
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line || line.startsWith('WEBVTT') || line.startsWith('Kind:') || line.startsWith('Language:') || line.includes('-->') || line.startsWith('NOTE')) {
+                    continue;
+                }
+                const clean = line.replace(/<[^>]+>/g, '').trim();
+                if (clean && clean !== lastLine) {
+                    textParts.push(clean);
+                    lastLine = clean;
+                }
+            }
+
+            const fullText = textParts.join(' ').trim();
+            if (fullText.length > 0) {
+                console.log(`[yt-dlp] Extracted transcript for ${videoId} (${preferredFile})`);
+                return fullText;
+            }
+        }
+    } catch (err) {
+        console.log('yt-dlp transcript extraction error:', err.message);
+    }
+    return null;
+}
+
 async function getRobustTranscript(videoId) {
     // 1. Try YoutubeTranscript with specific languages in order
     const languages = ['hi', 'en', 'hi-Latn', 'en-US'];
@@ -52,7 +104,13 @@ async function getRobustTranscript(videoId) {
         }
     } catch (e) {}
 
-    // 3. Fallback: Parse captionTracks from YouTube HTML player response
+    // 3. Try yt-dlp (Primary fallback for Cloud/Datacenter IPs like Render)
+    const ytDlpText = getTranscriptViaYtDlp(videoId);
+    if (ytDlpText) {
+        return ytDlpText;
+    }
+
+    // 4. Fallback: Parse captionTracks from YouTube HTML player response
     try {
         const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
         const res = await fetch(watchUrl, {
@@ -98,6 +156,7 @@ async function getRobustTranscript(videoId) {
 
     return '[Script / Captions Not Available for this video]';
 }
+
 
 
 function getYtDlpExe() {
