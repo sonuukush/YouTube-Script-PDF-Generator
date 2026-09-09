@@ -32,6 +32,74 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+async function getRobustTranscript(videoId) {
+    // 1. Try YoutubeTranscript with specific languages in order
+    const languages = ['hi', 'en', 'hi-Latn', 'en-US'];
+    for (const lang of languages) {
+        try {
+            const transcript = await YoutubeTranscript.fetchTranscript(videoId, { lang });
+            if (transcript && transcript.length > 0) {
+                return transcript.map(t => t.text).join(' ');
+            }
+        } catch (e) {}
+    }
+
+    // 2. Try YoutubeTranscript without language parameter (default track)
+    try {
+        const defaultTranscript = await YoutubeTranscript.fetchTranscript(videoId);
+        if (defaultTranscript && defaultTranscript.length > 0) {
+            return defaultTranscript.map(t => t.text).join(' ');
+        }
+    } catch (e) {}
+
+    // 3. Fallback: Parse captionTracks from YouTube HTML player response
+    try {
+        const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const res = await fetch(watchUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9,hi;q=0.8'
+            }
+        });
+        if (res.ok) {
+            const html = await res.text();
+            const match = html.match(/"captionTracks":\s*(\[.*?\])/);
+            if (match) {
+                const tracks = JSON.parse(match[1]);
+                const preferredTrack = tracks.find(t => t.languageCode === 'hi') || 
+                                       tracks.find(t => t.languageCode === 'en') || 
+                                       tracks[0];
+                if (preferredTrack && preferredTrack.baseUrl) {
+                    const subRes = await fetch(preferredTrack.baseUrl);
+                    if (subRes.ok) {
+                        const xmlText = await subRes.text();
+                        const textMatches = Array.from(xmlText.matchAll(/<text[^>]*>(.*?)<\/text>/gi));
+                        if (textMatches.length > 0) {
+                            const cleanText = textMatches
+                                .map(m => m[1]
+                                    .replace(/&amp;/g, '&')
+                                    .replace(/&lt;/g, '<')
+                                    .replace(/&gt;/g, '>')
+                                    .replace(/&#39;/g, "'")
+                                    .replace(/&quot;/g, '"')
+                                    .replace(/<[^>]+>/g, ''))
+                                .join(' ');
+                            if (cleanText.trim().length > 0) {
+                                return cleanText.trim();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.log('CaptionTracks scraper error:', e.message);
+    }
+
+    return '[Script / Captions Not Available for this video]';
+}
+
+
 function getYtDlpExe() {
     const localExe = path.join(__dirname, 'yt-dlp.exe');
     if (process.platform === 'win32' && fs.existsSync(localExe)) {
@@ -277,22 +345,7 @@ async function runExtractionTask(jobId, displayHandle, sanitizeName, targetUrl, 
             job.progress = Math.round(15 + ((i + 1) / videoList.length) * 60);
             job.message = `Extracting Script [${i + 1}/${videoList.length}]: "${item.title}"`;
 
-            let scriptText = '';
-            try {
-                const transcript = await YoutubeTranscript.fetchTranscript(item.id, { lang: 'hi' });
-                if (transcript && transcript.length > 0) {
-                    scriptText = transcript.map(t => t.text).join(' ');
-                } else {
-                    const fallback = await YoutubeTranscript.fetchTranscript(item.id);
-                    if (fallback && fallback.length > 0) {
-                        scriptText = fallback.map(t => t.text).join(' ');
-                    } else {
-                        scriptText = '[Script / Captions Not Available for this video]';
-                    }
-                }
-            } catch (err) {
-                scriptText = '[Script / Captions Not Available for this video]';
-            }
+            const scriptText = await getRobustTranscript(item.id);
 
             fullData.push({
                 index: i + 1,
@@ -539,22 +592,7 @@ async function runCompetitorAnalysisTask(jobId, displayHandle, sanitizeName, tar
             job.progress = Math.round(30 + ((i + 1) / topVideos.length) * 15);
             job.message = `Extracting Transcript & Hook [${i + 1}/${topVideos.length}]: "${item.title}"`;
 
-            let scriptText = '';
-            try {
-                const transcript = await YoutubeTranscript.fetchTranscript(item.id, { lang: 'hi' });
-                if (transcript && transcript.length > 0) {
-                    scriptText = transcript.map(t => t.text).join(' ');
-                } else {
-                    const fallback = await YoutubeTranscript.fetchTranscript(item.id);
-                    if (fallback && fallback.length > 0) {
-                        scriptText = fallback.map(t => t.text).join(' ');
-                    } else {
-                        scriptText = '[Script / Captions Not Available for this video]';
-                    }
-                }
-            } catch (err) {
-                scriptText = '[Script / Captions Not Available for this video]';
-            }
+            const scriptText = await getRobustTranscript(item.id);
 
             const hookText = extractHookText(scriptText);
 
